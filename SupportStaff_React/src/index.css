@@ -81,3 +81,24 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;
 }
+
+/* Ensure cursor pointer on buttons and clickable elements */
+button,
+[role="button"],
+.btn,
+.clickable,
+a,
+select,
+label,
+tr[onClick],
+tr[onclick],
+[onClick],
+[onclick],
+input[type="checkbox"],
+input[type="radio"],
+input[type="submit"],
+input[type="button"] {
+  cursor: pointer;
+}
+
+
