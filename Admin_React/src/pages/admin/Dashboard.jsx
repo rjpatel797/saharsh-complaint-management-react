@@ -832,6 +832,21 @@ const Dashboard = () => {
             return 'https://gps3.saharshsolutions.co.in/complaintmaster.jsp';
         }
 
+        // RTO server
+        if (name === 'rto' || name.includes('rto')) {
+            return 'https://rto.saharshsolutions.co.in/complaintmaster.jsp';
+        }
+
+        // GVK server
+        if (name === 'gvk' || name.includes('gvk')) {
+            return 'http://gvk.saharshsolutions.co.in/complaintmaster.jsp';
+        }
+
+        // EMRI server
+        if (name === 'emri' || name.includes('emri')) {
+            return 'https://emri.saharshsolutions.co.in/complaintmaster.jsp';
+        }
+
         // Unknown server name → let caller handle as configuration error
         return null;
     };
@@ -922,19 +937,25 @@ const Dashboard = () => {
     const handleServerSelect = (server) => {
         const brandName = (server.brandName || '').toLowerCase().trim();
         
-        // Check if server is valid (videocon, torrentgas, server_1, server_2, server_3)
+        // Check if server is valid (videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri)
         const isValidServer =
             brandName === 'videocon' ||
             brandName.includes('torrent') ||
             brandName === 'server_1' ||
             brandName === 'server_2' ||
-            brandName === 'server_3';
+            brandName === 'server_3' ||
+            brandName === 'rto' ||
+            brandName.includes('rto') ||
+            brandName === 'gvk' ||
+            brandName.includes('gvk') ||
+            brandName === 'emri' ||
+            brandName.includes('emri');
         
         if (!isValidServer) {
             // Show error message for invalid server
             setToast({
                 show: true,
-                message: `"${server.brandName}" is not a valid server. Only videocon, torrentgas, server_1, server_2, and server_3 are supported.`, 
+                message: `"${server.brandName}" is not a valid server. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, and emri are supported.`, 
                 type: 'error'
             });
             setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
@@ -966,7 +987,7 @@ const Dashboard = () => {
         loadComplaintTypes();
     };
 
-    // Load Users - Only for valid servers (videocon, torrentgas, server_1, server_2, server_3)
+    // Load Users - Only for valid servers (videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri)
     const loadUsers = async (server) => {
         if (!server) return;
         
@@ -977,11 +998,17 @@ const Dashboard = () => {
             brandName.includes('torrent') ||
             brandName === 'server_1' ||
             brandName === 'server_2' ||
-            brandName === 'server_3';
+            brandName === 'server_3' ||
+            brandName === 'rto' ||
+            brandName.includes('rto') ||
+            brandName === 'gvk' ||
+            brandName.includes('gvk') ||
+            brandName === 'emri' ||
+            brandName.includes('emri');
         
         if (!isValidServer) {
             setUsers([]);
-            setUserError(`"${server.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, and server_3 are available.`);
+            setUserError(`"${server.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, and emri are available.`);
             return;
         }
         
@@ -1034,7 +1061,7 @@ const Dashboard = () => {
         loadDevices(user);
     };
 
-    // Load Devices - Only for valid servers (videocon, torrentgas, server_1, server_2, server_3)
+    // Load Devices - Only for valid servers (videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri)
     const loadDevices = async (user) => {
         if (!selectedServer || !user) return;
         
@@ -1045,11 +1072,17 @@ const Dashboard = () => {
             brandName.includes('torrent') ||
             brandName === 'server_1' ||
             brandName === 'server_2' ||
-            brandName === 'server_3';
+            brandName === 'server_3' ||
+            brandName === 'rto' ||
+            brandName.includes('rto') ||
+            brandName === 'gvk' ||
+            brandName.includes('gvk') ||
+            brandName === 'emri' ||
+            brandName.includes('emri');
         
         if (!isValidServer) {
             setDevices([]);
-            setDeviceError(`"${selectedServer.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, and server_3 are available.`);
+            setDeviceError(`"${selectedServer.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, and emri are available.`);
             return;
         }
         
