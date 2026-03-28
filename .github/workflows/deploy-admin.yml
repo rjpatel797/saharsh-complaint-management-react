@@ -4,35 +4,31 @@ on:
     branches: [ "master" ]
     paths:
       - 'Admin_React/**'
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Set up Node 20
         uses: actions/setup-node@v4
         with:
           node-version: '20.18.0'
-
       - name: Install dependencies
         run: |
           cd Admin_React
           npm install
-
       - name: Build project
         run: |
           cd Admin_React
           npm run build
-
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -p 22 ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
-
       - name: Backup Old Build
         run: |
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
@@ -42,14 +38,12 @@ jobs:
               echo Backup done!
             fi
           "
-
       - name: Upload new Build
         run: |
           scp -i ~/.ssh/id_rsa -P 22 -r \
             Admin_React/dist/. \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/saharshcomplaintmanagement/frontend_react/admin/dist/
           echo "✅ Admin build uploaded!"
-
       - name: Send Success Email
         if: success()
         uses: dawidd6/action-send-mail@v3
@@ -70,7 +64,6 @@ jobs:
             Server      : ${{ secrets.SERVER_HOST }}
             Location    : /opt/saharshcomplaintmanagement/frontend_react/admin/dist
             View Actions: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
       - name: Send Failure Email
         if: failure()
         uses: dawidd6/action-send-mail@v3
