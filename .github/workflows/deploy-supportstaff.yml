@@ -1,0 +1,99 @@
+name: Build & Deploy SupportStaff React
+on:
+  push:
+    branches: [ "master" ]
+    paths:
+      - 'SupportStaff_React/**'
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.18.0'
+
+      - name: Install dependencies
+        run: |
+          cd SupportStaff_React
+          npm install
+
+      - name: Build project
+        run: |
+          cd SupportStaff_React
+          npm run build
+
+      - name: Check Build Output
+        run: |
+          echo "Build output:"
+          ls -la SupportStaff_React/dist/ || echo "dist folder NOT found!"
+          find SupportStaff_React -name "index.html" || echo "index.html NOT found!"
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p 22 ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Backup Old Build
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+            TODAY=\$(TZ='Asia/Kolkata' date +%d-%m-%Y_%I-%M-%p) &&
+            if [ -d /opt/saharshcomplaintmanagement/frontend_react/supportstaff/dist ]; then
+              mv /opt/saharshcomplaintmanagement/frontend_react/supportstaff/dist /opt/saharshcomplaintmanagement/frontend_react/supportstaff/dist-old-\$TODAY &&
+              echo Backup done!
+            fi
+          "
+
+      - name: Upload new Build
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "mkdir -p /opt/saharshcomplaintmanagement/frontend_react/supportstaff/dist"
+          scp -i ~/.ssh/id_rsa -P 22 -r \
+            SupportStaff_React/dist/. \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/saharshcomplaintmanagement/frontend_react/supportstaff/dist/
+          echo "✅ SupportStaff build uploaded!"
+
+      - name: Send Success Email
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "✅ SCM SupportStaff React Deployment Successfully - ${{ github.ref_name }}"
+          to: ${{ secrets.MAIL_TO }}
+          from: ${{ secrets.MAIL_USERNAME }}
+          body: |
+            ✅ SCM SupportStaff React Deployment Successfully.
+            Branch      : ${{ github.ref_name }}
+            Commit      : ${{ github.sha }}
+            Deployed by : ${{ github.actor }}
+            Time        : ${{ github.event.head_commit.timestamp }}
+            Server      : ${{ secrets.SERVER_HOST }}
+            Location    : /opt/saharshcomplaintmanagement/frontend_react/supportstaff/dist
+            View Actions: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Send Failure Email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "❌ SCM SupportStaff React Deployment FAILED - ${{ github.ref_name }}"
+          to: ${{ secrets.MAIL_TO }}
+          from: ${{ secrets.MAIL_USERNAME }}
+          body: |
+            ❌ SCM SupportStaff React Deployment FAILED.
+            Branch       : ${{ github.ref_name }}
+            Commit       : ${{ github.sha }}
+            Triggered by : ${{ secrets.SERVER_USER }}
+            Time         : ${{ github.event.head_commit.timestamp }}
+            Check logs   : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
