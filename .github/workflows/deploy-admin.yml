@@ -70,11 +70,10 @@ jobs:
           to: ${{ secrets.MAIL_TO }}
           from: ${{ secrets.MAIL_USERNAME }}
           body: |
-            ✅ SCM Admin React Deployment Successfully.
             Branch      : ${{ github.ref_name }}
             Commit      : ${{ github.sha }}
             Deployed by : ${{ github.actor }}
-            Time        : ${{ github.event.head_commit.timestamp }}
+            Time        : ${{ github.run_started_at }}
             Server      : ${{ secrets.SERVER_HOST }}
             Location    : /opt/saharshcomplaintmanagement/frontend_react/admin/dist
             View Actions: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -91,9 +90,8 @@ jobs:
           to: ${{ secrets.MAIL_TO }}
           from: ${{ secrets.MAIL_USERNAME }}
           body: |
-            ❌ SCM Admin React Deployment FAILED.
             Branch       : ${{ github.ref_name }}
             Commit       : ${{ github.sha }}
             Triggered by : ${{ github.actor }}
-            Time         : ${{ github.event.head_commit.timestamp }}
+            Time         : ${{ github.run_started_at }}
             Check logs   : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
