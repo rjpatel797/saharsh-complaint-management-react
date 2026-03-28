@@ -27,6 +27,12 @@ jobs:
           cd Admin_React
           npm run build
 
+      - name: Check Build Output
+        run: |
+          echo "Build output:"
+          ls -la Admin_React/dist/ || echo "dist folder NOT found!"
+          find Admin_React -name "index.html" || echo "index.html NOT found!"
+
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
