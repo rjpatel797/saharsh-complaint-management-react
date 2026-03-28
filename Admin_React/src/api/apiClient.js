@@ -1,6 +1,17 @@
 import axios from 'axios';
 
-export const API_BASE_URL = "http://localhost:8585";
+//export const API_BASE_URL = "http://localhost:8585";
+const API_LOCAL = 'http://localhost:8585';
+const API_PRODUCTION = 'http://37.27.202.162:8585';
+
+// true = use production API while running `npm run dev`
+const USE_PRODUCTION_API_IN_DEV = false;
+
+const fromEnv = import.meta.env.VITE_API_BASE_URL?.trim();
+
+export const API_BASE_URL =
+    fromEnv ||
+    (import.meta.env.DEV && !USE_PRODUCTION_API_IN_DEV ? API_LOCAL : API_PRODUCTION);
 
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
