@@ -9,6 +9,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Set Timezone
+        run: echo "RUN_TIME=$(TZ='Asia/Kolkata' date '+%d-%m-%Y %I:%M %p')" >> $GITHUB_ENV
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -73,7 +76,7 @@ jobs:
             Branch      : ${{ github.ref_name }}
             Commit      : ${{ github.sha }}
             Deployed by : ${{ github.actor }}
-            Time        : ${{ github.run_started_at }}
+            Time        : ${{ env.RUN_TIME }}
             Server      : ${{ secrets.SERVER_HOST }}
             Location    : /opt/saharshcomplaintmanagement/frontend_react/supportstaff/dist
             View Actions: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -93,5 +96,5 @@ jobs:
             Branch       : ${{ github.ref_name }}
             Commit       : ${{ github.sha }}
             Triggered by : ${{ github.actor }}
-            Time         : ${{ github.run_started_at }}
+            Time         : ${{ env.RUN_TIME }}
             Check logs   : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
