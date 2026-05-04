@@ -873,6 +873,13 @@ const Dashboard = () => {
         return null;
     };
 
+    const VLTD_OPEN_API_BASE = 'http://51.79.255.42:2083/open/api';
+
+    const isVltdServer = (brandName) => {
+        const n = (brandName || '').toString().toLowerCase().trim();
+        return n === 'vltd' || n.includes('vltd');
+    };
+
     // Open Add Complaint Modal
     const openAddComplaintModal = () => {
         setAddComplaintModal(true);
@@ -973,13 +980,15 @@ const Dashboard = () => {
             brandName === 'emri112' ||
             brandName.includes('emri112') ||
             brandName === 'emri' ||
-            brandName.includes('emri');
+            brandName.includes('emri') ||
+            brandName === 'vltd' ||
+            brandName.includes('vltd');
         
         if (!isValidServer) {
             // Show error message for invalid server
             setToast({
                 show: true,
-                message: `"${server.brandName}" is not a valid server. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, and emri are supported.`, 
+                message: `"${server.brandName}" is not a valid server. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, emri, and vltd are supported.`, 
                 type: 'error'
             });
             setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
@@ -1030,11 +1039,13 @@ const Dashboard = () => {
             brandName === 'emri112' ||
             brandName.includes('emri112') ||
             brandName === 'emri' ||
-            brandName.includes('emri');
+            brandName.includes('emri') ||
+            brandName === 'vltd' ||
+            brandName.includes('vltd');
         
         if (!isValidServer) {
             setUsers([]);
-            setUserError(`"${server.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, and emri are available.`);
+            setUserError(`"${server.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, emri, and vltd are available.`);
             return;
         }
         
@@ -1042,6 +1053,36 @@ const Dashboard = () => {
         setUsers([]); // Clear previous users
         setUserError(null); // Clear previous error
         try {
+            if (isVltdServer(server.brandName)) {
+                const response = await fetch(`${VLTD_OPEN_API_BASE}/getAllUserList`, {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+                const data = await response.json();
+                if (!response.ok || data?.status === false) {
+                    setUsers([]);
+                    setUserError(data?.message || 'Failed to load users for VLTD');
+                    return;
+                }
+                const raw = Array.isArray(data?.data) ? data.data : [];
+                const userList = raw.map((u) => ({
+                    ...u,
+                    managerId: u.managerId,
+                    userid: u.managerId,
+                    id: u.managerId,
+                    username: u.name
+                }));
+                if (userList.length === 0) {
+                    setUserError('No users found for this server');
+                }
+                setUsers(userList);
+                return;
+            }
+
             const baseApiUrl = getServerBaseUrl(server.brandName);
             if (!baseApiUrl) {
                 setUserError('Invalid server configuration');
@@ -1106,11 +1147,13 @@ const Dashboard = () => {
             brandName === 'emri112' ||
             brandName.includes('emri112') ||
             brandName === 'emri' ||
-            brandName.includes('emri');
+            brandName.includes('emri') ||
+            brandName === 'vltd' ||
+            brandName.includes('vltd');
         
         if (!isValidServer) {
             setDevices([]);
-            setDeviceError(`"${selectedServer.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, and emri are available.`);
+            setDeviceError(`"${selectedServer.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, emri, and vltd are available.`);
             return;
         }
         
@@ -1118,6 +1161,42 @@ const Dashboard = () => {
         setDevices([]); // Clear previous devices
         setDeviceError(null); // Clear previous error
         try {
+            const managerId = user.managerId ?? user.userid ?? user.id;
+
+            if (isVltdServer(selectedServer.brandName)) {
+                if (managerId === undefined || managerId === null || `${managerId}`.trim() === '') {
+                    setDeviceError('Invalid manager ID for VLTD user');
+                    return;
+                }
+                const url = `${VLTD_OPEN_API_BASE}/getDeviceListByMid?managerId=${encodeURIComponent(managerId)}`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+                const data = await response.json();
+                if (!response.ok || data?.status === false) {
+                    setDevices([]);
+                    setDeviceError(data?.message || 'No devices found');
+                    return;
+                }
+                const raw = Array.isArray(data?.data) ? data.data : [];
+                const deviceList = raw.map((d) => ({
+                    ...d,
+                    deviceName: d.devicename,
+                    vehicleName: d.devicename,
+                    device_name: d.devicename
+                }));
+                if (deviceList.length === 0) {
+                    setDeviceError('No devices found for this user');
+                }
+                setDevices(deviceList);
+                return;
+            }
+
             const baseApiUrl = getServerBaseUrl(selectedServer.brandName);
             const userId = user.userid || user.id;
             if (!baseApiUrl || !userId) {
@@ -1163,7 +1242,7 @@ const Dashboard = () => {
     // Handle Device Selection
     const handleDeviceSelect = (device) => {
         setSelectedDevice(device);
-        setDeviceSearch(device.vehicleName || device.deviceName || 'Unknown Device');
+        setDeviceSearch(device.vehicleName || device.deviceName || device.devicename || 'Unknown Device');
         setOpenDropdown(null);
         setFieldErrors(prev => ({ ...prev, device: false }));
     };
@@ -1313,7 +1392,7 @@ const Dashboard = () => {
                 email: email,
                 requestType: 'WEB',
                 requestPanel: 'ADMIN',
-                deviceName: selectedDevice.vehicleName || selectedDevice.deviceName || selectedDevice.device_name,
+                deviceName: selectedDevice.vehicleName || selectedDevice.deviceName || selectedDevice.device_name || selectedDevice.devicename,
                 complaintType: typeof selectedComplaintType === 'string' ? selectedComplaintType : (selectedComplaintType.complaintType || selectedComplaintType.name)
             };
 
@@ -1351,13 +1430,13 @@ const Dashboard = () => {
 
     const getFilteredUsers = () => {
         if (!userSearch) return users;
-        return users.filter(u => u.username.toLowerCase().includes(userSearch.toLowerCase()));
+        return users.filter(u => (u.username || '').toLowerCase().includes(userSearch.toLowerCase()));
     };
 
     const getFilteredDevices = () => {
         if (!deviceSearch) return devices;
         return devices.filter(d => {
-            const name = (d.vehicleName || d.deviceName || '').toLowerCase();
+            const name = (d.vehicleName || d.deviceName || d.devicename || '').toLowerCase();
             return name.includes(deviceSearch.toLowerCase());
         });
     };
@@ -2466,11 +2545,11 @@ const Dashboard = () => {
                                         <input
                                             type="text"
                                             placeholder={selectedUser ? "Select Device" : "Select user first"}
-                                            value={selectedDevice ? (selectedDevice.vehicleName || selectedDevice.deviceName || 'Unknown Device') : deviceSearch}
+                                            value={selectedDevice ? (selectedDevice.vehicleName || selectedDevice.deviceName || selectedDevice.devicename || 'Unknown Device') : deviceSearch}
                                             onChange={(e) => {
                                                 setDeviceSearch(e.target.value);
                                                 if (selectedDevice) {
-                                                    const deviceName = selectedDevice.vehicleName || selectedDevice.deviceName || 'Unknown Device';
+                                                    const deviceName = selectedDevice.vehicleName || selectedDevice.deviceName || selectedDevice.devicename || 'Unknown Device';
                                                     if (e.target.value !== deviceName) {
                                                         setSelectedDevice(null);
                                                     }
@@ -2524,11 +2603,11 @@ const Dashboard = () => {
                                                 ) : (
                                                     getFilteredDevices().map((device, idx) => (
                                                         <button
-                                                            key={idx}
+                                                            key={device.deviceid ?? idx}
                                                             onClick={() => handleDeviceSelect(device)}
                                                             className="w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors text-sm font-medium text-gray-700 border-b border-gray-100 last:border-b-0"
                                                         >
-                                                            {device.vehicleName || device.deviceName || 'Unknown Device'}
+                                                            {device.vehicleName || device.deviceName || device.devicename || 'Unknown Device'}
                                                         </button>
                                                     ))
                                                 )}
