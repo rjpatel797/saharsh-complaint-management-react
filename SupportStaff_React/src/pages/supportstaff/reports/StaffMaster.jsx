@@ -5,8 +5,6 @@ import {
     Download,
     Filter,
     Calendar,
-    ChevronLeft,
-    ChevronRight,
     X,
     FileSpreadsheet,
     Loader2,
@@ -22,7 +20,8 @@ import apiClient from '../../../api/apiClient';
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 import Swal from 'sweetalert2';
-import TicketModal from '../../admin/TicketModal';
+import TicketModal from '../../../components/TicketModal';
+import CompactDatePicker from '../../../components/CompactDatePicker';
 
 const StaffMaster = () => {
     const [rawData, setRawData] = useState([]);
@@ -45,8 +44,6 @@ const StaffMaster = () => {
     const [modalData, setModalData] = useState({ open: false, title: '', content: '', isAssignedMembers: false, members: [] });
     const [selectedTicket, setSelectedTicket] = useState(null);
 
-    const fromDateRef = useRef(null);
-    const toDateRef = useRef(null);
     const hasFetchedInitialReportRef = useRef(false);
     const isInitialMountRef = useRef(true);
     const isFetchingRef = useRef(false);
@@ -452,22 +449,12 @@ const StaffMaster = () => {
                                     <Calendar size={10} /> Start Date
                                 </span>
                             </label>
-                            <div className="relative">
-                                <input
-                                    ref={fromDateRef}
-                                    type="date"
-                                    className="w-full px-2 py-1 pr-8 h-8 border border-gray-300 rounded-md bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-xs"
-                                    value={fromDate}
-                                    onChange={(e) => setFromDate(e.target.value)}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => fromDateRef.current?.showPicker?.() || fromDateRef.current?.click()}
-                                    className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-600 transition-colors pointer-events-auto"
-                                >
-                                    <Calendar size={12} />
-                                </button>
-                            </div>
+                            <CompactDatePicker
+                                id="staff-master-from-date"
+                                value={fromDate}
+                                onChange={setFromDate}
+                                placeholder="dd-mm-yyyy"
+                            />
                         </div>
                         <div className="form-control">
                             <label className="label py-0">
@@ -475,22 +462,12 @@ const StaffMaster = () => {
                                     <Calendar size={10} /> End Date
                                 </span>
                             </label>
-                            <div className="relative">
-                                <input
-                                    ref={toDateRef}
-                                    type="date"
-                                    className="w-full px-2 py-1 pr-8 h-8 border border-gray-300 rounded-md bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-xs"
-                                    value={toDate}
-                                    onChange={(e) => setToDate(e.target.value)}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => toDateRef.current?.showPicker?.() || toDateRef.current?.click()}
-                                    className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-600 transition-colors pointer-events-auto"
-                                >
-                                    <Calendar size={12} />
-                                </button>
-                            </div>
+                            <CompactDatePicker
+                                id="staff-master-to-date"
+                                value={toDate}
+                                onChange={setToDate}
+                                placeholder="dd-mm-yyyy"
+                            />
                         </div>
                     </div>
                     <div className="flex gap-1.5 w-full lg:w-auto">

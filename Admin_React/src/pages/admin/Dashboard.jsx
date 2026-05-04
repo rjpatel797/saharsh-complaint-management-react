@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import apiClient, { API_BASE_URL } from '../../api/apiClient';
 import Swal from 'sweetalert2';
-import TicketModal from './TicketModal';
+import TicketModal from '../../components/TicketModal';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 
@@ -462,31 +462,47 @@ const Dashboard = () => {
         }
     };
 
+    const getTicketDetailsByTicketId = async (ticketId) => {
+        if (!ticketId) return null;
+        try {
+            const response = await apiClient.get('/admin/getComplaintByTicketid', {
+                params: { ticketId }
+            });
+            return response?.data?.data || null;
+        } catch (error) {
+            console.error('Error fetching complaint details by ticketId:', error);
+            return null;
+        }
+    };
+
     // Handle View Ticket Details - Auto change status from Open to In Progress
     const handleViewTicketDetails = async (ticket) => {
+        const detailData = await getTicketDetailsByTicketId(ticket.ticketId);
+        const detailTicket = detailData ? { ...ticket, ...detailData } : ticket;
+
         // Check if status is "Open" and automatically change to "In Progress"
-        if (ticket.status && ticket.status.toLowerCase() === 'open') {
+        if (detailTicket.status && detailTicket.status.toLowerCase() === 'open') {
             try {
-                const res = await apiClient.put(`/admin/statusChangeComplaints/${ticket.id}?status=In Progress`);
+                const res = await apiClient.put(`/admin/statusChangeComplaints/${detailTicket.id}?status=In Progress`);
                 if (res.data.status) {
                     // Update the ticket object with new status before opening modal
-                    const updatedTicket = { ...ticket, status: 'In Progress' };
+                    const updatedTicket = { ...detailTicket, status: 'In Progress' };
                     setSelectedTicket(updatedTicket);
                     // Refresh tickets list
                     fetchTickets();
                     fetchStats();
                 } else {
                     // If status update fails, still open modal with original ticket
-                    setSelectedTicket(ticket);
+                    setSelectedTicket(detailTicket);
                 }
             } catch (error) {
                 console.error('Error updating status to In Progress:', error);
                 // If error occurs, still open modal with original ticket
-                setSelectedTicket(ticket);
+                setSelectedTicket(detailTicket);
             }
         } else {
             // If status is not "Open", just open the modal
-            setSelectedTicket(ticket);
+            setSelectedTicket(detailTicket);
         }
     };
 
@@ -634,7 +650,7 @@ const Dashboard = () => {
         
         // Parse assigned staff names to IDs
         const assignedIds = [];
-        if (assignedStaff && assignedStaff !== 'N/A' && assignedStaff !== 'Unassigned') {
+        if (assignedStaff && assignedStaff !== 'N/A' && assignedStaff !== '-' && assignedStaff !== 'Unassigned') {
             const staffNames = assignedStaff.split(',').map(s => s.trim());
             staffList.forEach(staff => {
                 if (staffNames.includes(staff.staffName)) {
@@ -703,7 +719,7 @@ const Dashboard = () => {
 
     // Helper: Status Display Name
     const getStatusDisplayName = (status) => {
-        if (!status) return 'N/A';
+        if (!status) return '-';
         const statusLower = status.toLowerCase();
         if (statusLower === 'resolved') return 'Self Resolved';
         if (statusLower === 'closed') return 'Auto Resolved';
@@ -733,13 +749,13 @@ const Dashboard = () => {
 
     // Helper: Action Panel Class
     const getActionPanelClass = (panel) => {
-        if (!panel || panel === 'N/A') return 'bg-gray-100 text-gray-700';
+        if (!panel || panel === 'N/A' || panel === '-') return 'bg-gray-100 text-gray-700';
         return 'bg-orange-100 text-orange-700';
     };
 
     // Helper: Action By Class
     const getActionByClass = (actionBy) => {
-        if (!actionBy || actionBy === 'N/A') return 'bg-gray-100 text-gray-700';
+        if (!actionBy || actionBy === 'N/A' || actionBy === '-') return 'bg-gray-100 text-gray-700';
         return 'bg-green-100 text-green-700';
     };
 
@@ -764,9 +780,9 @@ const Dashboard = () => {
 
     // Helper: Format Date
     const formatDate = (dateStr) => {
-        if (!dateStr) return 'N/A';
+        if (!dateStr) return '-';
         const d = new Date(dateStr.replace(' ', 'T')); // Handle potential space in date string
-        if (isNaN(d.getTime())) return 'N/A';
+        if (isNaN(d.getTime())) return '-';
 
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const month = months[d.getMonth()];
@@ -820,6 +836,11 @@ const Dashboard = () => {
         // server_1 → main GPS server
         if (name === 'server_1') {
             return 'https://gps.saharshsolutions.co.in/complaintmaster.jsp';
+        }
+
+        // EMRI112 — dedicated host (must be before server_2's `includes('2')` and before generic `emri`)
+        if (name === 'emri112' || name.includes('emri112')) {
+            return 'https://emri112.saharshsolutions.co.in/complaintmaster.jsp';
         }
 
         // server_2 / GPS2
@@ -937,7 +958,7 @@ const Dashboard = () => {
     const handleServerSelect = (server) => {
         const brandName = (server.brandName || '').toLowerCase().trim();
         
-        // Check if server is valid (videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri)
+        // Check if server is valid (videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, emri)
         const isValidServer =
             brandName === 'videocon' ||
             brandName.includes('torrent') ||
@@ -948,6 +969,8 @@ const Dashboard = () => {
             brandName.includes('rto') ||
             brandName === 'gvk' ||
             brandName.includes('gvk') ||
+            brandName === 'emri112' ||
+            brandName.includes('emri112') ||
             brandName === 'emri' ||
             brandName.includes('emri');
         
@@ -955,7 +978,7 @@ const Dashboard = () => {
             // Show error message for invalid server
             setToast({
                 show: true,
-                message: `"${server.brandName}" is not a valid server. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, and emri are supported.`, 
+                message: `"${server.brandName}" is not a valid server. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, and emri are supported.`, 
                 type: 'error'
             });
             setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
@@ -987,7 +1010,7 @@ const Dashboard = () => {
         loadComplaintTypes();
     };
 
-    // Load Users - Only for valid servers (videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri)
+    // Load Users - Only for valid servers (videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, emri)
     const loadUsers = async (server) => {
         if (!server) return;
         
@@ -1003,12 +1026,14 @@ const Dashboard = () => {
             brandName.includes('rto') ||
             brandName === 'gvk' ||
             brandName.includes('gvk') ||
+            brandName === 'emri112' ||
+            brandName.includes('emri112') ||
             brandName === 'emri' ||
             brandName.includes('emri');
         
         if (!isValidServer) {
             setUsers([]);
-            setUserError(`"${server.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, and emri are available.`);
+            setUserError(`"${server.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, and emri are available.`);
             return;
         }
         
@@ -1061,7 +1086,7 @@ const Dashboard = () => {
         loadDevices(user);
     };
 
-    // Load Devices - Only for valid servers (videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri)
+    // Load Devices - Only for valid servers (videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, emri)
     const loadDevices = async (user) => {
         if (!selectedServer || !user) return;
         
@@ -1077,12 +1102,14 @@ const Dashboard = () => {
             brandName.includes('rto') ||
             brandName === 'gvk' ||
             brandName.includes('gvk') ||
+            brandName === 'emri112' ||
+            brandName.includes('emri112') ||
             brandName === 'emri' ||
             brandName.includes('emri');
         
         if (!isValidServer) {
             setDevices([]);
-            setDeviceError(`"${selectedServer.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, and emri are available.`);
+            setDeviceError(`"${selectedServer.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, and emri are available.`);
             return;
         }
         
@@ -1544,18 +1571,18 @@ const Dashboard = () => {
                                                     onClick={() => handleViewTicketDetails(t)}
                                                     className="font-bold text-gray-900 hover:text-blue-600 hover:underline cursor-pointer transition-colors duration-200 group-hover:scale-105 inline-block"
                                                 >
-                                                    {t.ticketId || 'N/A'}
+                                                    {t.ticketId || '-'}
                                                 </button>
                                             </td>
                                             <td className="text-gray-600 text-sm whitespace-nowrap py-3 px-4 text-center font-medium">{formatDate(t.createDate)}</td>
                                             <td className="text-gray-600 text-sm whitespace-nowrap py-3 px-4 text-center font-medium">{formatDate(t.updateDate)}</td>
-                                            <td className="text-gray-800 whitespace-nowrap py-3 px-4 text-center font-medium">{t.username || 'N/A'}</td>
+                                            <td className="text-gray-800 whitespace-nowrap py-3 px-4 text-center font-medium">{t.username || '-'}</td>
                                             <td className="whitespace-nowrap py-3 px-4 text-center">
                                                 <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 border border-blue-200 whitespace-nowrap inline-block shadow-sm">
-                                                    {t.brandName || 'N/A'}
+                                                    {t.brandName || '-'}
                                                 </span>
                                             </td>
-                                            <td className="text-gray-700 whitespace-nowrap py-3 px-4 text-center font-medium">{t.deviceOrderId || 'N/A'}</td>
+                                            <td className="text-gray-700 whitespace-nowrap py-3 px-4 text-center font-medium">{t.deviceOrderId || '-'}</td>
                                             <td className="whitespace-nowrap py-3 px-4 text-center">
                                                 <span
                                                     onClick={() => handleStatusUpdate(t.id, t.status)}
@@ -1584,45 +1611,45 @@ const Dashboard = () => {
                                                     </button>
                                                 )}
                                             </td>
-                                            <td className="text-gray-700 whitespace-nowrap py-3 px-4 text-center font-medium">{t.contactNo || 'N/A'}</td>
+                                            <td className="text-gray-700 whitespace-nowrap py-3 px-4 text-center font-medium">{t.contactNo || '-'}</td>
                                             <td className="whitespace-nowrap py-3 px-4 text-center">
                                                 <span
                                                     onClick={() => handlePriorityUpdate(t.id, t.priority, t.status)}
                                                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 whitespace-nowrap inline-block shadow-sm ${getPriorityClass(t.priority)} ${(t.status && (t.status.toLowerCase() === 'closed' || t.status.toLowerCase() === 'resolved')) ? 'opacity-60 cursor-not-allowed hover:scale-100' : 'cursor-pointer hover:scale-105'}`}
                                                     title={(t.status && (t.status.toLowerCase() === 'closed' || t.status.toLowerCase() === 'resolved')) ? 'Cannot update priority for Closed or Resolved tickets' : ''}
                                                 >
-                                                    {t.priority || 'N/A'}
+                                                    {t.priority || '-'}
                                                 </span>
                                             </td>
                                             <td className="whitespace-nowrap py-3 px-4 text-center">
                                                 <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap inline-block shadow-sm ${getActionPanelClass(t.actionPanel)}`}>
-                                                    {t.actionPanel || 'N/A'}
+                                                    {t.actionPanel || '-'}
                                                 </span>
                                             </td>
                                             <td className="whitespace-nowrap py-3 px-4 text-center">
                                                 <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap inline-block shadow-sm ${getActionByClass(t.actionBy)}`}>
-                                                    {t.actionBy || 'N/A'}
+                                                    {t.actionBy || '-'}
                                                 </span>
                                             </td>
                                             <td className="whitespace-nowrap py-3 px-4 text-center">
                                                 <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 border border-blue-200 whitespace-nowrap inline-block uppercase shadow-sm">
-                                                    {t.requestType || 'N/A'}
+                                                    {t.requestType || '-'}
                                                 </span>
                                             </td>
                                             <td className="whitespace-nowrap py-3 px-4 text-center">
                                                 <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap inline-block shadow-sm ${getActionPanelClass(t.requestPanel)}`}>
-                                                    {t.requestPanel || 'N/A'}
+                                                    {t.requestPanel || '-'}
                                                 </span>
                                             </td>
                                             <td className="whitespace-nowrap py-3 px-4 text-center">
                                                 <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border border-green-200 whitespace-nowrap inline-block shadow-sm">
-                                                    {t.requestPerson || 'N/A'}
+                                                    {t.requestPerson || '-'}
                                                 </span>
                                             </td>
                                             <td
                                                 className="max-w-[150px] truncate whitespace-nowrap py-3 px-4 text-center cursor-pointer transition-all duration-200 mx-auto group/complaintType"
                                                 onClick={() => {
-                                                    if (t.complaintType && t.complaintType !== 'N/A') {
+                                                    if (t.complaintType && t.complaintType !== 'N/A' && t.complaintType !== '-') {
                                                         setTextModal({
                                                             open: true,
                                                             title: 'Complaint Type Details',
@@ -1630,20 +1657,20 @@ const Dashboard = () => {
                                                         });
                                                     }
                                                 }}
-                                                title={t.complaintType && t.complaintType !== 'N/A' ? 'Click to view full text' : ''}
+                                                title={t.complaintType && t.complaintType !== 'N/A' && t.complaintType !== '-' ? 'Click to view full text' : ''}
                                             >
-                                                {t.complaintType && t.complaintType !== 'N/A' ? (
+                                                {t.complaintType && t.complaintType !== 'N/A' && t.complaintType !== '-' ? (
                                                     <span className="text-blue-600 hover:text-blue-700 font-medium underline decoration-2 underline-offset-2 group-hover/complaintType:bg-blue-50 px-2 py-1 rounded transition-all duration-200">
                                                         {t.complaintType.length > 20 ? t.complaintType.substring(0, 20) + '...' : t.complaintType}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-gray-400">N/A</span>
+                                                    <span className="text-gray-400">-</span>
                                                 )}
                                             </td>
                                             <td
                                                 className="max-w-[150px] truncate whitespace-nowrap py-3 px-4 text-center cursor-pointer transition-all duration-200 mx-auto group/remark"
                                                 onClick={() => {
-                                                    if (t.remark && t.remark !== 'N/A') {
+                                                    if (t.remark && t.remark !== 'N/A' && t.remark !== '-') {
                                                         setTextModal({
                                                             open: true,
                                                             title: 'Remark Details',
@@ -1651,20 +1678,20 @@ const Dashboard = () => {
                                                         });
                                                     }
                                                 }}
-                                                title={t.remark && t.remark !== 'N/A' ? 'Click to view full text' : ''}
+                                                title={t.remark && t.remark !== 'N/A' && t.remark !== '-' ? 'Click to view full text' : ''}
                                             >
-                                                {t.remark && t.remark !== 'N/A' ? (
+                                                {t.remark && t.remark !== 'N/A' && t.remark !== '-' ? (
                                                     <span className="text-blue-600 hover:text-blue-700 font-medium underline decoration-2 underline-offset-2 group-hover/remark:bg-blue-50 px-2 py-1 rounded transition-all duration-200">
                                                         {t.remark.length > 20 ? t.remark.substring(0, 20) + '...' : t.remark}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-gray-400">N/A</span>
+                                                    <span className="text-gray-400">-</span>
                                                 )}
                                             </td>
                                             <td
                                                 className="max-w-[200px] truncate whitespace-nowrap py-3 px-4 text-center cursor-pointer transition-all duration-200 mx-auto group/desc"
                                                 onClick={() => {
-                                                    if (t.shortDescription && t.shortDescription !== 'N/A') {
+                                                    if (t.shortDescription && t.shortDescription !== 'N/A' && t.shortDescription !== '-') {
                                                         setTextModal({
                                                             open: true,
                                                             title: 'User Description Details',
@@ -1672,14 +1699,14 @@ const Dashboard = () => {
                                                         });
                                                     }
                                                 }}
-                                                title={t.shortDescription && t.shortDescription !== 'N/A' ? 'Click to view full text' : ''}
+                                                title={t.shortDescription && t.shortDescription !== 'N/A' && t.shortDescription !== '-' ? 'Click to view full text' : ''}
                                             >
-                                                {t.shortDescription && t.shortDescription !== 'N/A' ? (
+                                                {t.shortDescription && t.shortDescription !== 'N/A' && t.shortDescription !== '-' ? (
                                                     <span className="text-blue-600 hover:text-blue-700 font-medium underline decoration-2 underline-offset-2 group-hover/desc:bg-blue-50 px-2 py-1 rounded transition-all duration-200">
                                                         {t.shortDescription.length > 20 ? t.shortDescription.substring(0, 20) + '...' : t.shortDescription}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-gray-400">N/A</span>
+                                                    <span className="text-gray-400">-</span>
                                                 )}
                                             </td>
                                             <td className="text-gray-600 text-sm whitespace-nowrap py-3 px-4 text-center font-medium">{formatDate(t.resolveDate)}</td>

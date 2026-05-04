@@ -16,6 +16,7 @@ const TicketModal = ({ ticket, onClose, onUpdate }) => {
             month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
         });
     };
+    const ticketDeviceName = ticket.deviceName || ticket.device_name || ticket.deviceOrderId || ticket.vehicleName || ticket.device || 'N/A';
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in text-gray-800">
@@ -70,7 +71,7 @@ const TicketModal = ({ ticket, onClose, onUpdate }) => {
                                         </div>
                                         <div>
                                             <p className="text-xs font-medium text-gray-500 mb-1">DEVICE NAME</p>
-                                            <p className="text-sm font-bold text-gray-800">{ticket.brandName || 'N/A'}</p>
+                                            <p className="text-sm font-bold text-gray-800">{ticketDeviceName}</p>
                                         </div>
                                         <div>
                                             <p className="text-xs font-medium text-gray-500 mb-1">COMPLAINT TYPE</p>

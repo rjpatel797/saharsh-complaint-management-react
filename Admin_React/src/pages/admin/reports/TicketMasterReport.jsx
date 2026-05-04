@@ -6,8 +6,6 @@ import {
     Filter,
     Calendar,
     Users,
-    ChevronLeft,
-    ChevronRight,
     X,
     FileSpreadsheet,
     Loader2,
@@ -23,7 +21,8 @@ import apiClient from '../../../api/apiClient';
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 import Swal from 'sweetalert2';
-import TicketModal from '../TicketModal';
+import TicketModal from '../../../components/TicketModal';
+import CompactDatePicker from '../../../components/CompactDatePicker';
 
 const TicketMasterReport = () => {
     const [rawData, setRawData] = useState([]);
@@ -54,8 +53,6 @@ const TicketMasterReport = () => {
     const [selectedTicket, setSelectedTicket] = useState(null);
 
     const staffDropdownRef = useRef(null);
-    const fromDateRef = useRef(null);
-    const toDateRef = useRef(null);
     const hasFetchedStaffRef = useRef(false);
     const hasFetchedInitialReportRef = useRef(false);
     const isInitialMountRef = useRef(true);
@@ -204,6 +201,7 @@ const TicketMasterReport = () => {
     // For display, use filtered data if search is active, otherwise use API total
     const displayData = filteredData;
     const displayTotal = searchTerm.trim() ? filteredData.length : totalElements;
+    const processedByCount = displayTotal;
 
     const exportToExcel = async () => {
         if (displayTotal === 0) {
@@ -427,6 +425,11 @@ const TicketMasterReport = () => {
                         <h2 className="text-lg font-black text-slate-800 tracking-tight">Ticket Master Report</h2>
                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Audit Trail & Performance History</p>
                     </div>
+                    <div className="ml-2 px-3 py-1 rounded-md bg-indigo-50 border border-indigo-200 flex items-center gap-2">
+                        <User size={12} className="text-indigo-600" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-indigo-700">Processed By</span>
+                        <span className="text-sm font-black text-indigo-800">{processedByCount}</span>
+                    </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-1.5 w-full xl:w-auto">
@@ -483,22 +486,12 @@ const TicketMasterReport = () => {
                                     <Calendar size={10} /> Start Date
                                 </span>
                             </label>
-                            <div className="relative">
-                                <input
-                                    ref={fromDateRef}
-                                    type="date"
-                                    className="w-full px-2 py-1 pr-8 h-8 border border-gray-300 rounded-md bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-xs"
-                                    value={fromDate}
-                                    onChange={(e) => setFromDate(e.target.value)}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => fromDateRef.current?.showPicker?.() || fromDateRef.current?.click()}
-                                    className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-600 transition-colors pointer-events-auto"
-                                >
-                                    <Calendar size={12} />
-                                </button>
-                            </div>
+                            <CompactDatePicker
+                                id="ticket-master-from-date"
+                                value={fromDate}
+                                onChange={setFromDate}
+                                placeholder="dd-mm-yyyy"
+                            />
                         </div>
                         <div className="form-control">
                             <label className="label py-0">
@@ -506,22 +499,12 @@ const TicketMasterReport = () => {
                                     <Calendar size={10} /> End Date
                                 </span>
                             </label>
-                            <div className="relative">
-                                <input
-                                    ref={toDateRef}
-                                    type="date"
-                                    className="w-full px-2 py-1 pr-8 h-8 border border-gray-300 rounded-md bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-xs"
-                                    value={toDate}
-                                    onChange={(e) => setToDate(e.target.value)}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => toDateRef.current?.showPicker?.() || toDateRef.current?.click()}
-                                    className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-600 transition-colors pointer-events-auto"
-                                >
-                                    <Calendar size={12} />
-                                </button>
-                            </div>
+                            <CompactDatePicker
+                                id="ticket-master-to-date"
+                                value={toDate}
+                                onChange={setToDate}
+                                placeholder="dd-mm-yyyy"
+                            />
                         </div>
                         <div className="form-control relative" ref={staffDropdownRef}>
                             <label className="label py-0">
