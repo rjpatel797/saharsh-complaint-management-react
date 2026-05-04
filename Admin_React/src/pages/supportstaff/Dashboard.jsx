@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import apiClient, { API_BASE_URL } from '../../api/apiClient';
 import Swal from 'sweetalert2';
-import TicketModal from '../admin/TicketModal';
+import TicketModal from '../../components/TicketModal';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 

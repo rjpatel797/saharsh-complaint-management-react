@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 import Swal from 'sweetalert2';
+import PremiumLoader from '../../components/PremiumLoader';
 
 const StaffCredentials = () => {
     const [credentials, setCredentials] = useState([]);
@@ -230,8 +231,7 @@ const StaffCredentials = () => {
                             {loading && !credentials.length ? (
                                 <tr>
                                     <td colSpan="8" className="py-20 text-center">
-                                        <Loader2 className="animate-spin mx-auto text-slate-800" size={32} />
-                                        <p className="mt-2 text-gray-400 font-bold uppercase text-[10px] tracking-widest">Loading...</p>
+                                        <PremiumLoader />
                                     </td>
                                 </tr>
                             ) : credentials.length === 0 ? (

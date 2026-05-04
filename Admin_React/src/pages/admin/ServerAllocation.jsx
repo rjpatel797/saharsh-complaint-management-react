@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 import Swal from 'sweetalert2';
+import PremiumLoader from '../../components/PremiumLoader';
 
 const ServerAllocation = () => {
     const [staffList, setStaffList] = useState([]);
@@ -276,7 +277,7 @@ const ServerAllocation = () => {
 
                                 <div className="p-4 space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar">
                                     {loading ? (
-                                        <div className="flex justify-center py-20"><Loader2 className="animate-spin text-blue-500" /></div>
+                                        <PremiumLoader />
                                     ) : filteredAllocated.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center opacity-30 italic py-10">
                                             <Server size={32} className="mb-2" />
@@ -331,7 +332,7 @@ const ServerAllocation = () => {
 
                                 <div className="p-4 space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar">
                                     {loading ? (
-                                        <div className="flex justify-center py-20"><Loader2 className="animate-spin text-gray-400" /></div>
+                                        <PremiumLoader />
                                     ) : filteredUnallocated.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center opacity-30 italic py-10">
                                             <Server size={32} className="mb-2" />

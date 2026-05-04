@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
     Settings,
     Search,
-    Loader2,
     Power,
     FileText,
     Bell,
@@ -12,6 +11,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import apiClient from '../../api/apiClient';
 import Swal from 'sweetalert2';
 import SmsLog from './SmsLog';
+import PremiumLoader from '../../components/PremiumLoader';
 
 const NotificationSettingContent = () => {
     // State
@@ -188,16 +188,7 @@ const NotificationSettingContent = () => {
                             {loading ? (
                                 <tr>
                                     <td colSpan="3" className="text-center py-20">
-                                        <div className="flex flex-col items-center gap-4">
-                                            <div className="relative">
-                                                <div className="absolute inset-0 bg-blue-200 rounded-full blur-xl opacity-50 animate-pulse"></div>
-                                                <Loader2 className="relative animate-spin mx-auto text-blue-600" size={40} />
-                                            </div>
-                                            <div>
-                                                <p className="text-gray-700 font-semibold text-base">Fetching notification settings...</p>
-                                                <p className="text-gray-400 text-sm mt-1">Please wait while we load your data</p>
-                                            </div>
-                                        </div>
+                                        <PremiumLoader />
                                     </td>
                                 </tr>
                             ) : filteredSettings.length === 0 ? (
@@ -308,36 +299,38 @@ const NotificationSetting = () => {
     const isSmsLogPage = location.pathname === '/admin/settings/smslog';
 
     return (
-        <div className="h-full flex flex-col gap-6 mt-4">
+        <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-3 pt-2">
             {/* Navigation Tabs - modern segmented control */}
-            <div className="flex justify-start">
+            <div className="shrink-0 flex justify-start">
                 <div className="inline-flex items-center gap-2 bg-slate-100 rounded-2xl p-1 shadow-sm border border-slate-200">
                     <button
                         onClick={() => navigate('/admin/settings')}
-                        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
                             !isSmsLogPage
                                 ? 'bg-white text-slate-900 shadow-md ring-2 ring-purple-500 ring-offset-1'
                                 : 'bg-transparent text-slate-600 hover:bg-white/70 hover:text-slate-900'
                         }`}
                     >
-                        <Settings size={18} className={!isSmsLogPage ? 'text-purple-600' : 'text-slate-500'} />
+                        <Settings size={16} className={!isSmsLogPage ? 'text-purple-600' : 'text-slate-500'} />
                         <span>Notification Settings</span>
                     </button>
                     <button
                         onClick={() => navigate('/admin/settings/smslog')}
-                        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
                             isSmsLogPage
                                 ? 'bg-white text-slate-900 shadow-md ring-2 ring-purple-500 ring-offset-1'
                                 : 'bg-transparent text-slate-600 hover:bg-white/70 hover:text-slate-900'
                         }`}
                     >
-                        <MessageSquare size={18} className={isSmsLogPage ? 'text-purple-600' : 'text-slate-500'} />
+                        <MessageSquare size={16} className={isSmsLogPage ? 'text-purple-600' : 'text-slate-500'} />
                         <span>SMS Log</span>
                     </button>
                 </div>
             </div>
 
-            {isSmsLogPage ? <SmsLog /> : <NotificationSettingContent />}
+            <div className="min-h-0 flex-1">
+                {isSmsLogPage ? <SmsLog /> : <NotificationSettingContent />}
+            </div>
         </div>
     );
 };

@@ -25,7 +25,9 @@ import {
 } from 'lucide-react';
 import apiClient, { API_BASE_URL } from '../../api/apiClient';
 import Swal from 'sweetalert2';
-import TicketModal from './TicketModal';
+import TicketModal from '../../components/TicketModal';
+import Pagination from '../../components/Pagination';
+import PremiumLoader from '../../components/PremiumLoader';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 
@@ -462,31 +464,47 @@ const Dashboard = () => {
         }
     };
 
+    const getTicketDetailsByTicketId = async (ticketId) => {
+        if (!ticketId) return null;
+        try {
+            const response = await apiClient.get('/admin/getComplaintByTicketid', {
+                params: { ticketId }
+            });
+            return response?.data?.data || null;
+        } catch (error) {
+            console.error('Error fetching complaint details by ticketId:', error);
+            return null;
+        }
+    };
+
     // Handle View Ticket Details - Auto change status from Open to In Progress
     const handleViewTicketDetails = async (ticket) => {
+        const detailData = await getTicketDetailsByTicketId(ticket.ticketId);
+        const detailTicket = detailData ? { ...ticket, ...detailData } : ticket;
+
         // Check if status is "Open" and automatically change to "In Progress"
-        if (ticket.status && ticket.status.toLowerCase() === 'open') {
+        if (detailTicket.status && detailTicket.status.toLowerCase() === 'open') {
             try {
-                const res = await apiClient.put(`/admin/statusChangeComplaints/${ticket.id}?status=In Progress`);
+                const res = await apiClient.put(`/admin/statusChangeComplaints/${detailTicket.id}?status=In Progress`);
                 if (res.data.status) {
                     // Update the ticket object with new status before opening modal
-                    const updatedTicket = { ...ticket, status: 'In Progress' };
+                    const updatedTicket = { ...detailTicket, status: 'In Progress' };
                     setSelectedTicket(updatedTicket);
                     // Refresh tickets list
                     fetchTickets();
                     fetchStats();
                 } else {
                     // If status update fails, still open modal with original ticket
-                    setSelectedTicket(ticket);
+                    setSelectedTicket(detailTicket);
                 }
             } catch (error) {
                 console.error('Error updating status to In Progress:', error);
                 // If error occurs, still open modal with original ticket
-                setSelectedTicket(ticket);
+                setSelectedTicket(detailTicket);
             }
         } else {
             // If status is not "Open", just open the modal
-            setSelectedTicket(ticket);
+            setSelectedTicket(detailTicket);
         }
     };
 
@@ -634,7 +652,7 @@ const Dashboard = () => {
         
         // Parse assigned staff names to IDs
         const assignedIds = [];
-        if (assignedStaff && assignedStaff !== 'N/A' && assignedStaff !== 'Unassigned') {
+        if (assignedStaff && assignedStaff !== 'N/A' && assignedStaff !== '-' && assignedStaff !== 'Unassigned') {
             const staffNames = assignedStaff.split(',').map(s => s.trim());
             staffList.forEach(staff => {
                 if (staffNames.includes(staff.staffName)) {
@@ -703,7 +721,7 @@ const Dashboard = () => {
 
     // Helper: Status Display Name
     const getStatusDisplayName = (status) => {
-        if (!status) return 'N/A';
+        if (!status) return '-';
         const statusLower = status.toLowerCase();
         if (statusLower === 'resolved') return 'Self Resolved';
         if (statusLower === 'closed') return 'Auto Resolved';
@@ -733,13 +751,13 @@ const Dashboard = () => {
 
     // Helper: Action Panel Class
     const getActionPanelClass = (panel) => {
-        if (!panel || panel === 'N/A') return 'bg-gray-100 text-gray-700';
+        if (!panel || panel === 'N/A' || panel === '-') return 'bg-gray-100 text-gray-700';
         return 'bg-orange-100 text-orange-700';
     };
 
     // Helper: Action By Class
     const getActionByClass = (actionBy) => {
-        if (!actionBy || actionBy === 'N/A') return 'bg-gray-100 text-gray-700';
+        if (!actionBy || actionBy === 'N/A' || actionBy === '-') return 'bg-gray-100 text-gray-700';
         return 'bg-green-100 text-green-700';
     };
 
@@ -764,9 +782,9 @@ const Dashboard = () => {
 
     // Helper: Format Date
     const formatDate = (dateStr) => {
-        if (!dateStr) return 'N/A';
+        if (!dateStr) return '-';
         const d = new Date(dateStr.replace(' ', 'T')); // Handle potential space in date string
-        if (isNaN(d.getTime())) return 'N/A';
+        if (isNaN(d.getTime())) return '-';
 
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const month = months[d.getMonth()];
@@ -822,6 +840,11 @@ const Dashboard = () => {
             return 'https://gps.saharshsolutions.co.in/complaintmaster.jsp';
         }
 
+        // EMRI112 — dedicated host (must be before server_2's `includes('2')` and before generic `emri`)
+        if (name === 'emri112' || name.includes('emri112')) {
+            return 'https://emri112.saharshsolutions.co.in/complaintmaster.jsp';
+        }
+
         // server_2 / GPS2
         if (name === 'server_2' || name.includes('2')) {
             return 'https://gps2.saharshsolutions.co.in/complaintmaster.jsp';
@@ -849,6 +872,13 @@ const Dashboard = () => {
 
         // Unknown server name → let caller handle as configuration error
         return null;
+    };
+
+    const VLTD_OPEN_API_BASE = 'http://51.79.255.42:2083/open/api';
+
+    const isVltdServer = (brandName) => {
+        const n = (brandName || '').toString().toLowerCase().trim();
+        return n === 'vltd' || n.includes('vltd');
     };
 
     // Open Add Complaint Modal
@@ -937,7 +967,7 @@ const Dashboard = () => {
     const handleServerSelect = (server) => {
         const brandName = (server.brandName || '').toLowerCase().trim();
         
-        // Check if server is valid (videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri)
+        // Check if server is valid (videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, emri)
         const isValidServer =
             brandName === 'videocon' ||
             brandName.includes('torrent') ||
@@ -948,14 +978,18 @@ const Dashboard = () => {
             brandName.includes('rto') ||
             brandName === 'gvk' ||
             brandName.includes('gvk') ||
+            brandName === 'emri112' ||
+            brandName.includes('emri112') ||
             brandName === 'emri' ||
-            brandName.includes('emri');
+            brandName.includes('emri') ||
+            brandName === 'vltd' ||
+            brandName.includes('vltd');
         
         if (!isValidServer) {
             // Show error message for invalid server
             setToast({
                 show: true,
-                message: `"${server.brandName}" is not a valid server. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, and emri are supported.`, 
+                message: `"${server.brandName}" is not a valid server. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, emri, and vltd are supported.`, 
                 type: 'error'
             });
             setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
@@ -987,7 +1021,7 @@ const Dashboard = () => {
         loadComplaintTypes();
     };
 
-    // Load Users - Only for valid servers (videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri)
+    // Load Users - Only for valid servers (videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, emri)
     const loadUsers = async (server) => {
         if (!server) return;
         
@@ -1003,12 +1037,16 @@ const Dashboard = () => {
             brandName.includes('rto') ||
             brandName === 'gvk' ||
             brandName.includes('gvk') ||
+            brandName === 'emri112' ||
+            brandName.includes('emri112') ||
             brandName === 'emri' ||
-            brandName.includes('emri');
+            brandName.includes('emri') ||
+            brandName === 'vltd' ||
+            brandName.includes('vltd');
         
         if (!isValidServer) {
             setUsers([]);
-            setUserError(`"${server.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, and emri are available.`);
+            setUserError(`"${server.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, emri, and vltd are available.`);
             return;
         }
         
@@ -1016,6 +1054,36 @@ const Dashboard = () => {
         setUsers([]); // Clear previous users
         setUserError(null); // Clear previous error
         try {
+            if (isVltdServer(server.brandName)) {
+                const response = await fetch(`${VLTD_OPEN_API_BASE}/getAllUserList`, {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+                const data = await response.json();
+                if (!response.ok || data?.status === false) {
+                    setUsers([]);
+                    setUserError(data?.message || 'Failed to load users for VLTD');
+                    return;
+                }
+                const raw = Array.isArray(data?.data) ? data.data : [];
+                const userList = raw.map((u) => ({
+                    ...u,
+                    managerId: u.managerId,
+                    userid: u.managerId,
+                    id: u.managerId,
+                    username: u.name
+                }));
+                if (userList.length === 0) {
+                    setUserError('No users found for this server');
+                }
+                setUsers(userList);
+                return;
+            }
+
             const baseApiUrl = getServerBaseUrl(server.brandName);
             if (!baseApiUrl) {
                 setUserError('Invalid server configuration');
@@ -1061,7 +1129,7 @@ const Dashboard = () => {
         loadDevices(user);
     };
 
-    // Load Devices - Only for valid servers (videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri)
+    // Load Devices - Only for valid servers (videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, emri)
     const loadDevices = async (user) => {
         if (!selectedServer || !user) return;
         
@@ -1077,12 +1145,16 @@ const Dashboard = () => {
             brandName.includes('rto') ||
             brandName === 'gvk' ||
             brandName.includes('gvk') ||
+            brandName === 'emri112' ||
+            brandName.includes('emri112') ||
             brandName === 'emri' ||
-            brandName.includes('emri');
+            brandName.includes('emri') ||
+            brandName === 'vltd' ||
+            brandName.includes('vltd');
         
         if (!isValidServer) {
             setDevices([]);
-            setDeviceError(`"${selectedServer.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, and emri are available.`);
+            setDeviceError(`"${selectedServer.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, emri, and vltd are available.`);
             return;
         }
         
@@ -1090,6 +1162,42 @@ const Dashboard = () => {
         setDevices([]); // Clear previous devices
         setDeviceError(null); // Clear previous error
         try {
+            const managerId = user.managerId ?? user.userid ?? user.id;
+
+            if (isVltdServer(selectedServer.brandName)) {
+                if (managerId === undefined || managerId === null || `${managerId}`.trim() === '') {
+                    setDeviceError('Invalid manager ID for VLTD user');
+                    return;
+                }
+                const url = `${VLTD_OPEN_API_BASE}/getDeviceListByMid?managerId=${encodeURIComponent(managerId)}`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+                const data = await response.json();
+                if (!response.ok || data?.status === false) {
+                    setDevices([]);
+                    setDeviceError(data?.message || 'No devices found');
+                    return;
+                }
+                const raw = Array.isArray(data?.data) ? data.data : [];
+                const deviceList = raw.map((d) => ({
+                    ...d,
+                    deviceName: d.devicename,
+                    vehicleName: d.devicename,
+                    device_name: d.devicename
+                }));
+                if (deviceList.length === 0) {
+                    setDeviceError('No devices found for this user');
+                }
+                setDevices(deviceList);
+                return;
+            }
+
             const baseApiUrl = getServerBaseUrl(selectedServer.brandName);
             const userId = user.userid || user.id;
             if (!baseApiUrl || !userId) {
@@ -1135,7 +1243,7 @@ const Dashboard = () => {
     // Handle Device Selection
     const handleDeviceSelect = (device) => {
         setSelectedDevice(device);
-        setDeviceSearch(device.vehicleName || device.deviceName || 'Unknown Device');
+        setDeviceSearch(device.vehicleName || device.deviceName || device.devicename || 'Unknown Device');
         setOpenDropdown(null);
         setFieldErrors(prev => ({ ...prev, device: false }));
     };
@@ -1285,7 +1393,7 @@ const Dashboard = () => {
                 email: email,
                 requestType: 'WEB',
                 requestPanel: 'ADMIN',
-                deviceName: selectedDevice.vehicleName || selectedDevice.deviceName || selectedDevice.device_name,
+                deviceName: selectedDevice.vehicleName || selectedDevice.deviceName || selectedDevice.device_name || selectedDevice.devicename,
                 complaintType: typeof selectedComplaintType === 'string' ? selectedComplaintType : (selectedComplaintType.complaintType || selectedComplaintType.name)
             };
 
@@ -1323,13 +1431,13 @@ const Dashboard = () => {
 
     const getFilteredUsers = () => {
         if (!userSearch) return users;
-        return users.filter(u => u.username.toLowerCase().includes(userSearch.toLowerCase()));
+        return users.filter(u => (u.username || '').toLowerCase().includes(userSearch.toLowerCase()));
     };
 
     const getFilteredDevices = () => {
         if (!deviceSearch) return devices;
         return devices.filter(d => {
-            const name = (d.vehicleName || d.deviceName || '').toLowerCase();
+            const name = (d.vehicleName || d.deviceName || d.devicename || '').toLowerCase();
             return name.includes(deviceSearch.toLowerCase());
         });
     };
@@ -1343,11 +1451,11 @@ const Dashboard = () => {
     };
 
     return (
-        // Root content uses full width of AdminLayout main (which already has px-4)
-        <div className="h-full overflow-y-auto overflow-x-hidden custom-scrollbar">
-            <div className="flex flex-col gap-1 mt-4 pb-6">
+        // No outer scroll: stats shrink; table card flex-1 and only the grid body scrolls inside it
+        <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden">
+            <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3 pt-2">
             {/* Summary Cards - Colored Status Blocks */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 md:gap-2">
+            <div className="grid shrink-0 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 md:gap-2">
                 {[
                     { label: 'Total Tickets', value: stats.total, icon: <FileText size={18} />, color: 'from-emerald-400 via-emerald-500 to-emerald-600', bg: 'bg-emerald-500', iconBg: 'bg-white/15', iconColor: 'text-white', type: 'all' },
                     { label: 'Open', value: stats.open, icon: <CircleDot size={18} />, color: 'from-blue-400 via-blue-500 to-blue-600', bg: 'bg-blue-500', iconBg: 'bg-white/15', iconColor: 'text-white', type: 'status', key: 'Open' },
@@ -1408,22 +1516,22 @@ const Dashboard = () => {
                 })}
             </div>
 
-            {/* Main Table Card - Modern Design */}
-            <div className="bg-white flex flex-col">
-                {/* Header Section - Enhanced */}
-                <div className="px-4 md:px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-gray-50 via-white to-gray-50 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="flex items-center gap-3 flex-wrap">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-100 rounded-xl">
-                                <FileText className="text-blue-600" size={20} />
+            {/* Main Table Card: fills remaining height; only table body scrolls */}
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+                {/* Toolbar: compact fonts/padding so more table rows fit; table body unchanged */}
+                <div className="shrink-0 border-b border-gray-200 bg-gradient-to-r from-gray-50 via-white to-gray-50 px-3 py-2.5 md:px-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex items-center gap-2">
+                            <div className="rounded-lg bg-blue-100 p-1.5">
+                                <FileText className="text-blue-600" size={17} />
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-gray-900">Recent Complaints</h2>
-                                <p className="text-xs text-gray-500 font-medium">Manage and track all tickets</p>
+                                <h2 className="text-base font-bold leading-tight text-gray-900">Recent Complaints</h2>
+                                <p className="text-[11px] font-medium leading-snug text-gray-500">Manage and track all tickets</p>
                             </div>
                         </div>
                         {activeFilter.type !== 'all' && (
-                            <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold border border-blue-200">
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-100 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
                                 <span>{getStatusDisplayName(activeFilter.value)}</span>
                                 <button 
                                     onClick={() => { setActiveFilter({ type: 'all', value: '' }); setCurrentPage(0); }} 
@@ -1434,36 +1542,36 @@ const Dashboard = () => {
                             </span>
                         )}
                     </div>
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                         <button
                             onClick={() => setAddComplaintModal(true)}
-                            className="bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 hover:from-blue-700 hover:via-blue-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl active:scale-95 group"
+                            className="group flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-md transition-all duration-300 hover:from-blue-700 hover:via-blue-700 hover:to-indigo-700 hover:shadow-lg active:scale-95"
                         >
-                            <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" />
+                            <Plus size={15} className="transition-transform duration-300 group-hover:rotate-90" />
                             <span>Add Complaint</span>
                         </button>
-                        <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 border border-gray-200">
-                            <label className="text-xs font-semibold text-gray-600 whitespace-nowrap">Show</label>
+                        <div className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5">
+                            <label className="whitespace-nowrap text-[11px] font-semibold text-gray-600">Show</label>
                             <select
                                 value={pageSize}
                                 onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(0); }}
-                                className="px-2 py-1 text-sm border-0 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer"
+                                className="cursor-pointer rounded-md border-0 bg-white px-1.5 py-0.5 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                                 <option value={10}>10</option>
                                 <option value={25}>25</option>
                                 <option value={50}>50</option>
                                 <option value={100}>100</option>
                             </select>
-                            <span className="text-xs font-semibold text-gray-600 whitespace-nowrap">entries</span>
+                            <span className="whitespace-nowrap text-[11px] font-semibold text-gray-600">entries</span>
                         </div>
-                        <div className="relative flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 border border-gray-200">
-                            <Search size={16} className="text-gray-400" />
+                        <div className="relative flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5">
+                            <Search size={14} className="shrink-0 text-gray-400" />
                             <input
                                 type="text"
                                 placeholder="Search tickets..."
                                 value={searchTerm}
                                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(0); }}
-                                className="px-2 py-1 pr-8 text-sm border-0 rounded-lg bg-transparent text-gray-700 w-full min-w-[150px] md:w-64 focus:outline-none focus:ring-0 placeholder:text-gray-400 font-medium"
+                                className="w-full min-w-[140px] rounded-md border-0 bg-transparent px-1 py-0.5 pr-7 text-xs font-medium text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-0 md:w-56"
                             />
                             {searchTerm && (
                                 <button
@@ -1478,47 +1586,38 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto custom-scrollbar relative">
-                    <table className="w-full border-collapse min-w-full">
-                            <thead className="bg-gradient-to-r from-gray-50 to-gray-100 z-10 shadow-md">
+                <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto custom-scrollbar relative">
+                    <table className="w-full min-w-max border-collapse">
+                            <thead className="bg-gradient-to-r from-gray-50 to-gray-100 z-10 shadow-md [&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-gray-100">
                                 <tr>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">SR NO.</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">TICKET ID</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">CREATED</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">UPDATED</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">USERNAME</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">SERVER NAME</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">DEVICE NAME</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">STATUS</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">ASSIGN TO</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">CONTACT NO.</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">PRIORITY</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">ACTION PANEL</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">ACTION BY</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">REQUEST TYPE</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">REQUEST PANEL</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">REQUEST PERSON</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">COMPLAINT TYPE</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">REMARK</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">USER DESCRIPTION</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">RESOLVED</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">ACTIONS</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">SR NO.</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">TICKET ID</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">CREATED</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">UPDATED</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">USERNAME</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">SERVER NAME</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">DEVICE NAME</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">STATUS</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">ASSIGN TO</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">CONTACT NO.</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">PRIORITY</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">ACTION PANEL</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">ACTION BY</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">REQUEST TYPE</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">REQUEST PANEL</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">REQUEST PERSON</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">COMPLAINT TYPE</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">REMARK</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">USER DESCRIPTION</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">RESOLVED</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">ACTIONS</th>
                                 </tr>
                             </thead>
-                            <tbody className="text-sm bg-white divide-y divide-gray-100">
+                            <tbody className="divide-y divide-gray-100 bg-white text-sm">
                             {loading ? (
                                 <tr>
                                     <td colSpan="21" className="text-center py-20">
-                                        <div className="flex flex-col items-center gap-4">
-                                            <div className="relative">
-                                                <div className="absolute inset-0 bg-blue-200 rounded-full blur-xl opacity-50 animate-pulse"></div>
-                                                <Loader2 className="relative animate-spin mx-auto text-blue-600" size={40} />
-                                            </div>
-                                            <div>
-                                                <p className="text-gray-700 font-semibold text-base">Fetching tickets...</p>
-                                                <p className="text-gray-400 text-sm mt-1">Please wait while we load your data</p>
-                                            </div>
-                                        </div>
+                                        <PremiumLoader />
                                     </td>
                                 </tr>
                             ) : tickets.length === 0 ? (
@@ -1544,18 +1643,18 @@ const Dashboard = () => {
                                                     onClick={() => handleViewTicketDetails(t)}
                                                     className="font-bold text-gray-900 hover:text-blue-600 hover:underline cursor-pointer transition-colors duration-200 group-hover:scale-105 inline-block"
                                                 >
-                                                    {t.ticketId || 'N/A'}
+                                                    {t.ticketId || '-'}
                                                 </button>
                                             </td>
                                             <td className="text-gray-600 text-sm whitespace-nowrap py-3 px-4 text-center font-medium">{formatDate(t.createDate)}</td>
                                             <td className="text-gray-600 text-sm whitespace-nowrap py-3 px-4 text-center font-medium">{formatDate(t.updateDate)}</td>
-                                            <td className="text-gray-800 whitespace-nowrap py-3 px-4 text-center font-medium">{t.username || 'N/A'}</td>
+                                            <td className="text-gray-800 whitespace-nowrap py-3 px-4 text-center font-medium">{t.username || '-'}</td>
                                             <td className="whitespace-nowrap py-3 px-4 text-center">
                                                 <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 border border-blue-200 whitespace-nowrap inline-block shadow-sm">
-                                                    {t.brandName || 'N/A'}
+                                                    {t.brandName || '-'}
                                                 </span>
                                             </td>
-                                            <td className="text-gray-700 whitespace-nowrap py-3 px-4 text-center font-medium">{t.deviceOrderId || 'N/A'}</td>
+                                            <td className="text-gray-700 whitespace-nowrap py-3 px-4 text-center font-medium">{t.deviceOrderId || '-'}</td>
                                             <td className="whitespace-nowrap py-3 px-4 text-center">
                                                 <span
                                                     onClick={() => handleStatusUpdate(t.id, t.status)}
@@ -1584,45 +1683,45 @@ const Dashboard = () => {
                                                     </button>
                                                 )}
                                             </td>
-                                            <td className="text-gray-700 whitespace-nowrap py-3 px-4 text-center font-medium">{t.contactNo || 'N/A'}</td>
+                                            <td className="text-gray-700 whitespace-nowrap py-3 px-4 text-center font-medium">{t.contactNo || '-'}</td>
                                             <td className="whitespace-nowrap py-3 px-4 text-center">
                                                 <span
                                                     onClick={() => handlePriorityUpdate(t.id, t.priority, t.status)}
                                                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 whitespace-nowrap inline-block shadow-sm ${getPriorityClass(t.priority)} ${(t.status && (t.status.toLowerCase() === 'closed' || t.status.toLowerCase() === 'resolved')) ? 'opacity-60 cursor-not-allowed hover:scale-100' : 'cursor-pointer hover:scale-105'}`}
                                                     title={(t.status && (t.status.toLowerCase() === 'closed' || t.status.toLowerCase() === 'resolved')) ? 'Cannot update priority for Closed or Resolved tickets' : ''}
                                                 >
-                                                    {t.priority || 'N/A'}
+                                                    {t.priority || '-'}
                                                 </span>
                                             </td>
                                             <td className="whitespace-nowrap py-3 px-4 text-center">
                                                 <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap inline-block shadow-sm ${getActionPanelClass(t.actionPanel)}`}>
-                                                    {t.actionPanel || 'N/A'}
+                                                    {t.actionPanel || '-'}
                                                 </span>
                                             </td>
                                             <td className="whitespace-nowrap py-3 px-4 text-center">
                                                 <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap inline-block shadow-sm ${getActionByClass(t.actionBy)}`}>
-                                                    {t.actionBy || 'N/A'}
+                                                    {t.actionBy || '-'}
                                                 </span>
                                             </td>
                                             <td className="whitespace-nowrap py-3 px-4 text-center">
                                                 <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 border border-blue-200 whitespace-nowrap inline-block uppercase shadow-sm">
-                                                    {t.requestType || 'N/A'}
+                                                    {t.requestType || '-'}
                                                 </span>
                                             </td>
                                             <td className="whitespace-nowrap py-3 px-4 text-center">
                                                 <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap inline-block shadow-sm ${getActionPanelClass(t.requestPanel)}`}>
-                                                    {t.requestPanel || 'N/A'}
+                                                    {t.requestPanel || '-'}
                                                 </span>
                                             </td>
                                             <td className="whitespace-nowrap py-3 px-4 text-center">
                                                 <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border border-green-200 whitespace-nowrap inline-block shadow-sm">
-                                                    {t.requestPerson || 'N/A'}
+                                                    {t.requestPerson || '-'}
                                                 </span>
                                             </td>
                                             <td
                                                 className="max-w-[150px] truncate whitespace-nowrap py-3 px-4 text-center cursor-pointer transition-all duration-200 mx-auto group/complaintType"
                                                 onClick={() => {
-                                                    if (t.complaintType && t.complaintType !== 'N/A') {
+                                                    if (t.complaintType && t.complaintType !== 'N/A' && t.complaintType !== '-') {
                                                         setTextModal({
                                                             open: true,
                                                             title: 'Complaint Type Details',
@@ -1630,20 +1729,20 @@ const Dashboard = () => {
                                                         });
                                                     }
                                                 }}
-                                                title={t.complaintType && t.complaintType !== 'N/A' ? 'Click to view full text' : ''}
+                                                title={t.complaintType && t.complaintType !== 'N/A' && t.complaintType !== '-' ? 'Click to view full text' : ''}
                                             >
-                                                {t.complaintType && t.complaintType !== 'N/A' ? (
+                                                {t.complaintType && t.complaintType !== 'N/A' && t.complaintType !== '-' ? (
                                                     <span className="text-blue-600 hover:text-blue-700 font-medium underline decoration-2 underline-offset-2 group-hover/complaintType:bg-blue-50 px-2 py-1 rounded transition-all duration-200">
                                                         {t.complaintType.length > 20 ? t.complaintType.substring(0, 20) + '...' : t.complaintType}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-gray-400">N/A</span>
+                                                    <span className="text-gray-400">-</span>
                                                 )}
                                             </td>
                                             <td
                                                 className="max-w-[150px] truncate whitespace-nowrap py-3 px-4 text-center cursor-pointer transition-all duration-200 mx-auto group/remark"
                                                 onClick={() => {
-                                                    if (t.remark && t.remark !== 'N/A') {
+                                                    if (t.remark && t.remark !== 'N/A' && t.remark !== '-') {
                                                         setTextModal({
                                                             open: true,
                                                             title: 'Remark Details',
@@ -1651,20 +1750,20 @@ const Dashboard = () => {
                                                         });
                                                     }
                                                 }}
-                                                title={t.remark && t.remark !== 'N/A' ? 'Click to view full text' : ''}
+                                                title={t.remark && t.remark !== 'N/A' && t.remark !== '-' ? 'Click to view full text' : ''}
                                             >
-                                                {t.remark && t.remark !== 'N/A' ? (
+                                                {t.remark && t.remark !== 'N/A' && t.remark !== '-' ? (
                                                     <span className="text-blue-600 hover:text-blue-700 font-medium underline decoration-2 underline-offset-2 group-hover/remark:bg-blue-50 px-2 py-1 rounded transition-all duration-200">
                                                         {t.remark.length > 20 ? t.remark.substring(0, 20) + '...' : t.remark}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-gray-400">N/A</span>
+                                                    <span className="text-gray-400">-</span>
                                                 )}
                                             </td>
                                             <td
                                                 className="max-w-[200px] truncate whitespace-nowrap py-3 px-4 text-center cursor-pointer transition-all duration-200 mx-auto group/desc"
                                                 onClick={() => {
-                                                    if (t.shortDescription && t.shortDescription !== 'N/A') {
+                                                    if (t.shortDescription && t.shortDescription !== 'N/A' && t.shortDescription !== '-') {
                                                         setTextModal({
                                                             open: true,
                                                             title: 'User Description Details',
@@ -1672,14 +1771,14 @@ const Dashboard = () => {
                                                         });
                                                     }
                                                 }}
-                                                title={t.shortDescription && t.shortDescription !== 'N/A' ? 'Click to view full text' : ''}
+                                                title={t.shortDescription && t.shortDescription !== 'N/A' && t.shortDescription !== '-' ? 'Click to view full text' : ''}
                                             >
-                                                {t.shortDescription && t.shortDescription !== 'N/A' ? (
+                                                {t.shortDescription && t.shortDescription !== 'N/A' && t.shortDescription !== '-' ? (
                                                     <span className="text-blue-600 hover:text-blue-700 font-medium underline decoration-2 underline-offset-2 group-hover/desc:bg-blue-50 px-2 py-1 rounded transition-all duration-200">
                                                         {t.shortDescription.length > 20 ? t.shortDescription.substring(0, 20) + '...' : t.shortDescription}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-gray-400">N/A</span>
+                                                    <span className="text-gray-400">-</span>
                                                 )}
                                             </td>
                                             <td className="text-gray-600 text-sm whitespace-nowrap py-3 px-4 text-center font-medium">{formatDate(t.resolveDate)}</td>
@@ -1709,33 +1808,14 @@ const Dashboard = () => {
                     </table>
                 </div>
 
-                {/* Pagination - Modern Design */}
-                <div className="px-4 md:px-6 py-5 border-t border-gray-200 bg-gradient-to-r from-gray-50/50 to-white flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="text-sm text-gray-600 font-medium">
-                        Showing <span className="font-bold text-gray-900">{totalElements > 0 ? (currentPage * pageSize) + 1 : 0}</span> to <span className="font-bold text-gray-900">{Math.min((currentPage + 1) * pageSize, totalElements)}</span> of <span className="font-bold text-gray-900">{totalElements}</span> entries
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            disabled={currentPage === 0 || loading}
-                            onClick={() => setCurrentPage(p => p - 1)}
-                            className="px-4 py-2 text-sm font-semibold rounded-xl border-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:border-gray-400 hover:shadow-md disabled:hover:shadow-none disabled:hover:bg-white"
-                        >
-                            Previous
-                        </button>
-                        <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl shadow-lg">
-                            <span className="text-sm font-bold">{currentPage + 1}</span>
-                            <span className="text-xs opacity-80">of</span>
-                            <span className="text-sm font-bold">{totalPages}</span>
-                        </div>
-                        <button
-                            disabled={currentPage >= totalPages - 1 || loading}
-                            onClick={() => setCurrentPage(p => p + 1)}
-                            className="px-4 py-2 text-sm font-semibold rounded-xl border-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:border-gray-400 hover:shadow-md disabled:hover:shadow-none disabled:hover:bg-white"
-                        >
-                            Next
-                        </button>
-                    </div>
-                </div>
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalElements={totalElements}
+                    pageSize={pageSize}
+                    loading={loading}
+                    onPageChange={setCurrentPage}
+                />
             </div>
 
             {/* Ticket Modal */}
@@ -2457,11 +2537,11 @@ const Dashboard = () => {
                                         <input
                                             type="text"
                                             placeholder={selectedUser ? "Select Device" : "Select user first"}
-                                            value={selectedDevice ? (selectedDevice.vehicleName || selectedDevice.deviceName || 'Unknown Device') : deviceSearch}
+                                            value={selectedDevice ? (selectedDevice.vehicleName || selectedDevice.deviceName || selectedDevice.devicename || 'Unknown Device') : deviceSearch}
                                             onChange={(e) => {
                                                 setDeviceSearch(e.target.value);
                                                 if (selectedDevice) {
-                                                    const deviceName = selectedDevice.vehicleName || selectedDevice.deviceName || 'Unknown Device';
+                                                    const deviceName = selectedDevice.vehicleName || selectedDevice.deviceName || selectedDevice.devicename || 'Unknown Device';
                                                     if (e.target.value !== deviceName) {
                                                         setSelectedDevice(null);
                                                     }
@@ -2515,11 +2595,11 @@ const Dashboard = () => {
                                                 ) : (
                                                     getFilteredDevices().map((device, idx) => (
                                                         <button
-                                                            key={idx}
+                                                            key={device.deviceid ?? idx}
                                                             onClick={() => handleDeviceSelect(device)}
                                                             className="w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors text-sm font-medium text-gray-700 border-b border-gray-100 last:border-b-0"
                                                         >
-                                                            {device.vehicleName || device.deviceName || 'Unknown Device'}
+                                                            {device.vehicleName || device.deviceName || device.devicename || 'Unknown Device'}
                                                         </button>
                                                     ))
                                                 )}

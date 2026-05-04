@@ -6,8 +6,6 @@ import {
     Filter,
     Calendar,
     Users,
-    ChevronLeft,
-    ChevronRight,
     X,
     FileSpreadsheet,
     Loader2,
@@ -23,7 +21,10 @@ import apiClient from '../../../api/apiClient';
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 import Swal from 'sweetalert2';
-import TicketModal from '../TicketModal';
+import TicketModal from '../../../components/TicketModal';
+import CompactDatePicker from '../../../components/CompactDatePicker';
+import Pagination from '../../../components/Pagination';
+import PremiumLoader from '../../../components/PremiumLoader';
 
 const TicketMasterReport = () => {
     const [rawData, setRawData] = useState([]);
@@ -54,8 +55,6 @@ const TicketMasterReport = () => {
     const [selectedTicket, setSelectedTicket] = useState(null);
 
     const staffDropdownRef = useRef(null);
-    const fromDateRef = useRef(null);
-    const toDateRef = useRef(null);
     const hasFetchedStaffRef = useRef(false);
     const hasFetchedInitialReportRef = useRef(false);
     const isInitialMountRef = useRef(true);
@@ -204,6 +203,7 @@ const TicketMasterReport = () => {
     // For display, use filtered data if search is active, otherwise use API total
     const displayData = filteredData;
     const displayTotal = searchTerm.trim() ? filteredData.length : totalElements;
+    const processedByCount = displayTotal;
 
     const exportToExcel = async () => {
         if (displayTotal === 0) {
@@ -416,9 +416,9 @@ const TicketMasterReport = () => {
     };
 
     return (
-        <div className="space-y-3 animate-fade-in text-gray-800 pt-2 pb-4">
+        <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-3 pt-2 animate-fade-in text-gray-800">
             {/* Header & Main Actions */}
-            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-2 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
+            <div className="shrink-0 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-2 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
                 <div className="flex items-center gap-2">
                     <div className="p-2 bg-blue-600 text-white rounded-lg shadow-xl shadow-blue-100">
                         <FileText size={18} />
@@ -426,6 +426,11 @@ const TicketMasterReport = () => {
                     <div>
                         <h2 className="text-lg font-black text-slate-800 tracking-tight">Ticket Master Report</h2>
                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Audit Trail & Performance History</p>
+                    </div>
+                    <div className="ml-2 px-3 py-1 rounded-md bg-indigo-50 border border-indigo-200 flex items-center gap-2">
+                        <User size={12} className="text-indigo-600" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-indigo-700">Processed By</span>
+                        <span className="text-sm font-black text-indigo-800">{processedByCount}</span>
                     </div>
                 </div>
 
@@ -474,7 +479,7 @@ const TicketMasterReport = () => {
             </div>
 
             {/* Advanced Filters */}
-            <div className="bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
+            <div className="shrink-0 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
                 <div className="flex flex-col lg:flex-row gap-2 items-end">
                     <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 w-full">
                         <div className="form-control">
@@ -483,22 +488,12 @@ const TicketMasterReport = () => {
                                     <Calendar size={10} /> Start Date
                                 </span>
                             </label>
-                            <div className="relative">
-                                <input
-                                    ref={fromDateRef}
-                                    type="date"
-                                    className="w-full px-2 py-1 pr-8 h-8 border border-gray-300 rounded-md bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-xs"
-                                    value={fromDate}
-                                    onChange={(e) => setFromDate(e.target.value)}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => fromDateRef.current?.showPicker?.() || fromDateRef.current?.click()}
-                                    className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-600 transition-colors pointer-events-auto"
-                                >
-                                    <Calendar size={12} />
-                                </button>
-                            </div>
+                            <CompactDatePicker
+                                id="ticket-master-from-date"
+                                value={fromDate}
+                                onChange={setFromDate}
+                                placeholder="dd-mm-yyyy"
+                            />
                         </div>
                         <div className="form-control">
                             <label className="label py-0">
@@ -506,22 +501,12 @@ const TicketMasterReport = () => {
                                     <Calendar size={10} /> End Date
                                 </span>
                             </label>
-                            <div className="relative">
-                                <input
-                                    ref={toDateRef}
-                                    type="date"
-                                    className="w-full px-2 py-1 pr-8 h-8 border border-gray-300 rounded-md bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-xs"
-                                    value={toDate}
-                                    onChange={(e) => setToDate(e.target.value)}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => toDateRef.current?.showPicker?.() || toDateRef.current?.click()}
-                                    className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-600 transition-colors pointer-events-auto"
-                                >
-                                    <Calendar size={12} />
-                                </button>
-                            </div>
+                            <CompactDatePicker
+                                id="ticket-master-to-date"
+                                value={toDate}
+                                onChange={setToDate}
+                                placeholder="dd-mm-yyyy"
+                            />
                         </div>
                         <div className="form-control relative" ref={staffDropdownRef}>
                             <label className="label py-0">
@@ -585,9 +570,9 @@ const TicketMasterReport = () => {
                 </div>
             </div>
 
-            {/* Report Table */}
-            <div className="flex-1 min-h-0 bg-white flex flex-col overflow-hidden">
-                <div className="overflow-x-auto overflow-y-auto custom-scrollbar relative" style={{height: '430px' }}>
+            {/* Report Table — same card shell as summary/header blocks (rounded border box + scroll + pagination) */}
+            <div className="flex-1 min-h-0 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+                <div className="relative min-h-0 flex-1 overflow-x-auto overflow-y-auto custom-scrollbar">
                     <table className="w-full border-collapse min-w-full">
                         <thead className="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-10 shadow-md">
                             <tr>
@@ -618,16 +603,7 @@ const TicketMasterReport = () => {
                             {loading ? (
                                 <tr>
                                     <td colSpan="21" className="text-center py-20">
-                                        <div className="flex flex-col items-center gap-4">
-                                            <div className="relative">
-                                                <div className="absolute inset-0 bg-blue-200 rounded-full blur-xl opacity-50 animate-pulse"></div>
-                                                <Loader2 className="relative animate-spin mx-auto text-blue-600" size={40} />
-                                            </div>
-                                            <div>
-                                                <p className="text-gray-700 font-semibold text-base">Fetching tickets...</p>
-                                                <p className="text-gray-400 text-sm mt-1">Please wait while we load your data</p>
-                                            </div>
-                                        </div>
+                                        <PremiumLoader />
                                     </td>
                                 </tr>
                             ) : currentRecords.length === 0 ? (
@@ -670,7 +646,7 @@ const TicketMasterReport = () => {
                                             </td>
                                             <td className="text-gray-800 whitespace-nowrap py-2 px-3 text-center font-medium text-sm">{r.username || r.userName || '-'}</td>
                                             <td className="whitespace-nowrap py-2 px-3 text-center text-sm"><ServerNamePill serverName={r.brandName} /></td>
-                                            <td className="text-gray-700 whitespace-nowrap py-4 px-4 text-center font-medium">{r.deviceOrderId || '-'}</td>
+                                            <td className="text-gray-700 whitespace-nowrap py-2 px-3 text-center font-medium text-sm">{r.deviceOrderId || '-'}</td>
                                             <td className="whitespace-nowrap py-2 px-3 text-center text-sm"><PriorityPill priority={r.priority} /></td>
                                             <td className="whitespace-nowrap py-2 px-3 text-center text-sm"><StatusPill status={r.status} /></td>
                                             <td className="whitespace-nowrap py-2 px-3 text-center text-sm">
@@ -778,33 +754,14 @@ const TicketMasterReport = () => {
                     </table>
                 </div>
 
-                {/* Pagination - Modern Design */}
-                <div className="px-2 md:px-3 py-1.5 border-t border-gray-200 bg-gradient-to-r from-gray-50/50 to-white flex flex-col md:flex-row justify-between items-center gap-2">
-                    <div className="text-sm text-gray-600 font-medium">
-                        Showing <span className="font-bold text-gray-900">{displayTotal > 0 ? (currentPage * pageSize) + 1 : 0}</span> to <span className="font-bold text-gray-900">{Math.min((currentPage + 1) * pageSize, displayTotal)}</span> of <span className="font-bold text-gray-900">{displayTotal}</span> entries
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            disabled={currentPage === 0 || loading}
-                            onClick={() => setCurrentPage(p => p - 1)}
-                            className="px-3 py-1.5 text-sm font-semibold rounded-lg border transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:border-gray-400 disabled:hover:shadow-none disabled:hover:bg-white"
-                        >
-                            Previous
-                        </button>
-                        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg shadow-md">
-                            <span className="text-sm font-bold">{currentPage + 1}</span>
-                            <span className="text-xs opacity-80">of</span>
-                            <span className="text-sm font-bold">{calculatedTotalPages || 1}</span>
-                        </div>
-                        <button
-                            disabled={currentPage >= calculatedTotalPages - 1 || loading}
-                            onClick={() => setCurrentPage(p => p + 1)}
-                            className="px-3 py-1.5 text-sm font-semibold rounded-lg border transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:border-gray-400 disabled:hover:shadow-none disabled:hover:bg-white"
-                        >
-                            Next
-                        </button>
-                    </div>
-                </div>
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={calculatedTotalPages}
+                    totalElements={displayTotal}
+                    pageSize={pageSize}
+                    loading={loading}
+                    onPageChange={setCurrentPage}
+                />
             </div>
 
             {/* Ticket Modal */}
