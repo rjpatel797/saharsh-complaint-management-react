@@ -17,6 +17,7 @@ import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 import Pagination from '../../../components/Pagination';
 import PremiumLoader from '../../../components/PremiumLoader';
+import PageSizeDropdown from '../../../components/PageSizeDropdown';
 
 const ServerWiseReport = () => {
     const [rawData, setRawData] = useState([]);
@@ -231,19 +232,11 @@ const ServerWiseReport = () => {
                     </div>
 
                     <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
-                        <div className="flex items-center gap-2">
-                            <label className="text-sm text-gray-600">Show</label>
-                            <select
-                                value={pageSize}
-                                onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(0); }}
-                                className="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            >
-                                <option value={10}>10</option>
-                                <option value={25}>25</option>
-                                <option value={50}>50</option>
-                            </select>
-                            <span className="text-sm text-gray-600">entries</span>
-                        </div>
+                        <PageSizeDropdown
+                            pageSize={pageSize}
+                            setPageSize={setPageSize}
+                            onPageSizeChange={() => setCurrentPage(0)}
+                        />
                         <div className="relative w-full md:w-80">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                             <input

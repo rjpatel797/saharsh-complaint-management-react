@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 import Swal from 'sweetalert2';
+import PageSizeDropdown from '../../components/PageSizeDropdown';
 
 const DeviceModelManagement = () => {
     const [models, setModels] = useState([]);
@@ -160,16 +161,11 @@ const DeviceModelManagement = () => {
                             className="input input-bordered w-full pl-10 focus:ring-2 focus:ring-blue-500 border-gray-200"
                         />
                     </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-500 font-bold uppercase tracking-wider">Entries</span>
-                        <select
-                            value={pageSize}
-                            onChange={(e) => setPageSize(Number(e.target.value))}
-                            className="select select-bordered select-sm font-bold"
-                        >
-                            {[10, 25, 50].map(v => <option key={v} value={v}>{v}</option>)}
-                        </select>
-                    </div>
+                    <PageSizeDropdown
+                        pageSize={pageSize}
+                        setPageSize={setPageSize}
+                        onPageSizeChange={() => setCurrentPage(0)}
+                    />
                 </div>
 
                 <div className="overflow-x-auto">

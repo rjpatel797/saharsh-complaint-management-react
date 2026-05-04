@@ -21,6 +21,7 @@ import {
 import apiClient from '../../api/apiClient';
 import Swal from 'sweetalert2';
 import PremiumLoader from '../../components/PremiumLoader';
+import PageSizeDropdown from '../../components/PageSizeDropdown';
 
 const StaffCredentials = () => {
     const [credentials, setCredentials] = useState([]);
@@ -201,16 +202,11 @@ const StaffCredentials = () => {
                             className="input input-bordered w-full pl-10 focus:ring-2 focus:ring-slate-500 border-gray-200"
                         />
                     </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-400 font-bold uppercase tracking-wider">Show</span>
-                        <select
-                            value={pageSize}
-                            onChange={(e) => setPageSize(Number(e.target.value))}
-                            className="select select-bordered select-sm font-bold text-slate-700"
-                        >
-                            {[10, 25, 50].map(v => <option key={v} value={v}>{v}</option>)}
-                        </select>
-                    </div>
+                    <PageSizeDropdown
+                        pageSize={pageSize}
+                        setPageSize={setPageSize}
+                        onPageSizeChange={() => setCurrentPage(0)}
+                    />
                 </div>
 
                 <div className="overflow-x-auto">
