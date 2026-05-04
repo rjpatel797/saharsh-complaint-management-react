@@ -2,17 +2,17 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
     MessageSquare,
     Search,
-    Loader2,
     FileText,
     Phone,
     User,
-    Calendar,
     CheckCircle2,
     XCircle,
     X
 } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 import Swal from 'sweetalert2';
+import PremiumLoader from '../../components/PremiumLoader';
+import Pagination from '../../components/Pagination';
 
 const SmsLog = () => {
     // State
@@ -127,11 +127,11 @@ const SmsLog = () => {
     };
 
     return (
-        <div className="h-full flex flex-col gap-6">
-            {/* Main Table Card */}
-            <div className="bg-white flex flex-col overflow-hidden">
+        <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col animate-fade-in text-gray-800 pt-2">
+            {/* Main Table Card — table scrolls inside; pagination stays visible */}
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
                 {/* Header Section */}
-                <div className="px-4 md:px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-gray-50 via-white to-gray-50 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="shrink-0 px-4 md:px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 via-white to-gray-50 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-3 flex-wrap">
                         <div className="p-3 bg-purple-600 shadow-xl shadow-purple-100 rounded-2xl text-white">
                             <MessageSquare size={22} />
@@ -171,7 +171,7 @@ const SmsLog = () => {
                 </div>
 
                 {/* Table Content */}
-                <div className="flex-1 overflow-auto custom-scrollbar relative" style={{ maxHeight: '410px' }}>
+                <div className="relative min-h-0 flex-1 overflow-x-auto overflow-y-auto custom-scrollbar">
                     <table className="w-full border-collapse min-w-full">
                         <thead className="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-10 shadow-md">
                             <tr>
@@ -189,16 +189,7 @@ const SmsLog = () => {
                             {loading ? (
                                 <tr>
                                     <td colSpan="8" className="text-center py-20">
-                                        <div className="flex flex-col items-center gap-4">
-                                            <div className="relative">
-                                                <div className="absolute inset-0 bg-blue-200 rounded-full blur-xl opacity-50 animate-pulse"></div>
-                                                <Loader2 className="relative animate-spin mx-auto text-blue-600" size={40} />
-                                            </div>
-                                            <div>
-                                                <p className="text-gray-700 font-semibold text-base">Fetching SMS logs...</p>
-                                                <p className="text-gray-400 text-sm mt-1">Please wait while we load your data</p>
-                                            </div>
-                                        </div>
+                                        <PremiumLoader />
                                     </td>
                                 </tr>
                             ) : smsLogs.length === 0 ? (
@@ -304,45 +295,14 @@ const SmsLog = () => {
                     </table>
                 </div>
 
-                {/* Pagination - aligned with Dashboard pagination structure */}
-                <div className="px-4 md:px-6 py-5 border-t border-gray-200 bg-gradient-to-r from-gray-50/50 to-white flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="text-sm text-gray-600 font-medium">
-                        Showing{' '}
-                        <span className="font-bold text-gray-900">
-                            {totalElements > 0 ? (currentPage * pageSize) + 1 : 0}
-                        </span>{' '}
-                        to{' '}
-                        <span className="font-bold text-gray-900">
-                            {Math.min((currentPage + 1) * pageSize, totalElements)}
-                        </span>{' '}
-                        of{' '}
-                        <span className="font-bold text-gray-900">
-                            {totalElements}
-                        </span>{' '}
-                        entries
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            disabled={currentPage === 0 || loading}
-                            onClick={() => setCurrentPage(p => p - 1)}
-                            className="px-4 py-2 text-sm font-semibold rounded-xl border-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:border-gray-400 hover:shadow-md disabled:hover:shadow-none disabled:hover:bg-white"
-                        >
-                            Previous
-                        </button>
-                        <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl shadow-lg">
-                            <span className="text-sm font-bold">{currentPage + 1}</span>
-                            <span className="text-xs opacity-80">of</span>
-                            <span className="text-sm font-bold">{totalPages || 1}</span>
-                        </div>
-                        <button
-                            disabled={currentPage >= totalPages - 1 || loading}
-                            onClick={() => setCurrentPage(p => p + 1)}
-                            className="px-4 py-2 text-sm font-semibold rounded-xl border-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:border-gray-400 hover:shadow-md disabled:hover:shadow-none disabled:hover:bg-white"
-                        >
-                            Next
-                        </button>
-                    </div>
-                </div>
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalElements={totalElements}
+                    pageSize={pageSize}
+                    loading={loading}
+                    onPageChange={setCurrentPage}
+                />
             </div>
 
             {/* Full Message Modal */}

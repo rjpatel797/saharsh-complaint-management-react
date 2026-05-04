@@ -19,6 +19,7 @@ import {
 import apiClient from '../../api/apiClient';
 import Swal from 'sweetalert2';
 import Pagination from '../../components/Pagination';
+import PremiumLoader from '../../components/PremiumLoader';
 
 const SupportStaffManagement = () => {
     // State
@@ -320,16 +321,7 @@ const SupportStaffManagement = () => {
                             {loading ? (
                                 <tr>
                                     <td colSpan="7" className="text-center py-20">
-                                        <div className="flex flex-col items-center gap-4">
-                                            <div className="relative">
-                                                <div className="absolute inset-0 bg-blue-200 rounded-full blur-xl opacity-50 animate-pulse"></div>
-                                                <Loader2 className="relative animate-spin mx-auto text-blue-600" size={40} />
-                                            </div>
-                                            <div>
-                                                <p className="text-gray-700 font-semibold text-base">Fetching staff records...</p>
-                                                <p className="text-gray-400 text-sm mt-1">Please wait while we load your data</p>
-                                            </div>
-                                        </div>
+                                        <PremiumLoader />
                                     </td>
                                 </tr>
                             ) : staff.length === 0 ? (
