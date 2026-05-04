@@ -172,6 +172,7 @@ const StaffMaster = () => {
     // For display, use filtered data if search is active, otherwise use rawData
     const displayData = filteredData;
     const displayTotal = searchTerm.trim() ? filteredData.length : totalElements;
+    const processedByCount = displayTotal;
 
     const exportToExcel = async () => {
         if (displayTotal === 0) {
@@ -394,6 +395,11 @@ const StaffMaster = () => {
                     <div>
                         <h2 className="text-lg font-black text-slate-800 tracking-tight">Staff Master Report</h2>
                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Ticket Audit & Performance History</p>
+                    </div>
+                    <div className="ml-2 px-3 py-1 rounded-md bg-indigo-50 border border-indigo-200 flex items-center gap-2">
+                        <User size={12} className="text-indigo-600" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-indigo-700">Processed By</span>
+                        <span className="text-sm font-black text-indigo-800">{processedByCount}</span>
                     </div>
                 </div>
 

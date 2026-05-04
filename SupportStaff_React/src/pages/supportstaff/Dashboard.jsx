@@ -1459,7 +1459,7 @@ const Dashboard = () => {
                     { label: 'Self Resolved', value: stats.resolved, icon: <CheckCircle2 size={18} />, color: 'from-orange-400 via-orange-500 to-orange-600', bg: 'bg-orange-500', iconBg: 'bg-white/15', iconColor: 'text-white', type: 'status', key: 'Resolved' },
                     { label: 'Auto Resolved', value: stats.closed, icon: <XCircle size={18} />, color: 'from-slate-500 via-slate-600 to-slate-700', bg: 'bg-slate-600', iconBg: 'bg-white/15', iconColor: 'text-white', type: 'status', key: 'Closed' },
                     { label: 'Urgent', value: stats.urgent, icon: <AlertTriangle size={18} />, color: 'from-red-500 via-rose-500 to-red-600', bg: 'bg-red-500', iconBg: 'bg-white/15', iconColor: 'text-white', type: 'priority', key: 'Urgent' },
-                    { label: 'PROCESSED BY ME', value: stats.actionByCount, icon: <User size={18} />, color: 'from-indigo-500 via-indigo-600 to-violet-600', bg: 'bg-indigo-600', iconBg: 'bg-white/15', iconColor: 'text-white', type: 'summary', isFilterable: false },
+                    { label: 'PROCESSED BY ME', value: stats.actionByCount, subtitle: '(Monthly)', icon: <User size={18} />, color: 'from-indigo-500 via-indigo-600 to-violet-600', bg: 'bg-indigo-600', iconBg: 'bg-white/15', iconColor: 'text-white', type: 'summary', isFilterable: false },
                 ].map((card, idx) => {
                     const isFilterable = card.isFilterable !== false;
                     const isActive = isFilterable && activeFilter.type === card.type && activeFilter.value === card.key;
@@ -1493,9 +1493,16 @@ const Dashboard = () => {
                                                 {card.icon}
                                             </div>
                                         </div>
-                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-white/90">
-                                            {card.label}
-                                        </p>
+                                        <div className="flex flex-col leading-none">
+                                            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/90">
+                                                {card.label}
+                                            </p>
+                                            {card.subtitle && (
+                                                <span className="mt-0.5 text-[9px] font-semibold uppercase tracking-wider text-white/85">
+                                                    {card.subtitle}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <h3 className="text-lg sm:text-xl font-bold text-white group-hover:scale-110 transition-transform duration-300">
