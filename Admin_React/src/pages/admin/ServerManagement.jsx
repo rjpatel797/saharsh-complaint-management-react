@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Edit2, Trash2, Loader2, Server, Globe, FileText, Activity, X } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 import Swal from 'sweetalert2';
+import Pagination from '../../components/Pagination';
 
 const ServerManagement = () => {
     // State
@@ -163,12 +164,10 @@ const ServerManagement = () => {
     };
 
     return (
-        // Root layout - match Dashboard spacing (slight gap below navbar)
-        <div className="h-full flex flex-col gap-6 mt-4">
-            {/* Main Table Card - auto height (no extra empty vertical space) */}
-            <div className="bg-white flex flex-col overflow-hidden">
-                {/* Header Section - aligned with Dashboard header */}
-                <div className="px-4 md:px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-gray-50 via-white to-gray-50 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col animate-fade-in text-gray-800 pt-2">
+            {/* Main Table Card — fills viewport below navbar; table body scrolls inside */}
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+                <div className="shrink-0 px-4 md:px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 via-white to-gray-50 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-3 flex-wrap">
                         <div className="p-3 bg-blue-600 shadow-xl shadow-blue-100 rounded-2xl text-white">
                             <Server size={22} />
@@ -213,16 +212,15 @@ const ServerManagement = () => {
                     </div>
                 </div>
 
-                {/* Table Content - aligned with Dashboard table structure */}
-                <div className="flex-1 overflow-auto custom-scrollbar relative">
+                <div className="relative min-h-0 flex-1 overflow-x-auto overflow-y-auto custom-scrollbar">
                     <table className="w-full border-collapse min-w-full">
                         <thead className="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-10 shadow-md">
                             <tr>
-                                <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">SR NO.</th>
-                                <th className="whitespace-nowrap py-4 px-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">SERVER IDENTITY</th>
-                                <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">REGISTRATION SYNC</th>
-                                <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">LAST PULSE SYNC</th>
-                                <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">OPERATION</th>
+                                <th className="whitespace-nowrap py-2 px-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">SR NO.</th>
+                                <th className="whitespace-nowrap py-2 px-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">SERVER IDENTITY</th>
+                                <th className="whitespace-nowrap py-2 px-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">REGISTRATION SYNC</th>
+                                <th className="whitespace-nowrap py-2 px-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">LAST PULSE SYNC</th>
+                                <th className="whitespace-nowrap py-2 px-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">OPERATION</th>
                             </tr>
                         </thead>
                         <tbody className="text-sm bg-white divide-y divide-gray-100">
@@ -256,10 +254,10 @@ const ServerManagement = () => {
                             ) : (
                                 servers.map((server, index) => (
                                     <tr key={server.id || index} className="group hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-200 border-b border-gray-100">
-                                        <td className="text-gray-700 whitespace-nowrap text-center py-4 px-4 font-medium">
+                                        <td className="text-gray-700 whitespace-nowrap text-center py-2 px-3 font-medium">
                                             {(currentPage * pageSize) + index + 1}
                                         </td>
-                                        <td className="whitespace-nowrap py-4 px-4">
+                                        <td className="whitespace-nowrap py-2 px-3">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center font-black text-xs border border-slate-200 group-hover:bg-white group-hover:border-blue-200 group-hover:text-blue-600 transition-all">
                                                     {(server.brandName || server.brandname)?.[0]?.toUpperCase() || 'S'}
@@ -269,13 +267,13 @@ const ServerManagement = () => {
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="text-gray-600 whitespace-nowrap py-4 px-4 text-center font-medium text-sm">
+                                        <td className="text-gray-600 whitespace-nowrap py-2 px-3 text-center font-medium text-sm">
                                             {formatDate(server.createDate || server.createDatetime)}
                                         </td>
-                                        <td className="text-gray-600 whitespace-nowrap py-4 px-4 text-center font-medium text-sm">
+                                        <td className="text-gray-600 whitespace-nowrap py-2 px-3 text-center font-medium text-sm">
                                             {formatDate(server.updateDate || server.updateDatetime)}
                                         </td>
-                                        <td className="whitespace-nowrap py-4 px-4 text-center">
+                                        <td className="whitespace-nowrap py-2 px-3 text-center">
                                             <div className="flex justify-center gap-2 transition-all">
                                                 <button
                                                     onClick={() => openModal(server)}
@@ -300,45 +298,14 @@ const ServerManagement = () => {
                     </table>
                 </div>
 
-                {/* Pagination - aligned with Dashboard pagination structure */}
-                <div className="px-4 md:px-6 py-5 border-t border-gray-200 bg-gradient-to-r from-gray-50/50 to-white flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="text-sm text-gray-600 font-medium">
-                        Showing{' '}
-                        <span className="font-bold text-gray-900">
-                            {totalElements > 0 ? (currentPage * pageSize) + 1 : 0}
-                        </span>{' '}
-                        to{' '}
-                        <span className="font-bold text-gray-900">
-                            {Math.min((currentPage + 1) * pageSize, totalElements)}
-                        </span>{' '}
-                        of{' '}
-                        <span className="font-bold text-gray-900">
-                            {totalElements}
-                        </span>{' '}
-                        entries
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            disabled={currentPage === 0 || loading}
-                            onClick={() => setCurrentPage(p => p - 1)}
-                            className="px-4 py-2 text-sm font-semibold rounded-xl border-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:border-gray-400 hover:shadow-md disabled:hover:shadow-none disabled:hover:bg-white"
-                        >
-                            Previous
-                        </button>
-                        <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl shadow-lg">
-                            <span className="text-sm font-bold">{currentPage + 1}</span>
-                            <span className="text-xs opacity-80">of</span>
-                            <span className="text-sm font-bold">{totalPages || 1}</span>
-                        </div>
-                        <button
-                            disabled={currentPage >= totalPages - 1 || loading}
-                            onClick={() => setCurrentPage(p => p + 1)}
-                            className="px-4 py-2 text-sm font-semibold rounded-xl border-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:border-gray-400 hover:shadow-md disabled:hover:shadow-none disabled:hover:bg-white"
-                        >
-                            Next
-                        </button>
-                    </div>
-                </div>
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalElements={totalElements}
+                    pageSize={pageSize}
+                    loading={loading}
+                    onPageChange={setCurrentPage}
+                />
             </div>
 
             {/* Modal - Matching Style */}

@@ -27,6 +27,7 @@ import {
 import apiClient, { API_BASE_URL } from '../../api/apiClient';
 import Swal from 'sweetalert2';
 import TicketModal from '../../components/TicketModal';
+import Pagination from '../../components/Pagination';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 
@@ -1367,11 +1368,10 @@ const Dashboard = () => {
     };
 
     return (
-        // Root content uses full width of SupportStaffLayout main (which already has px-4)
-        <div className="h-full overflow-y-auto overflow-x-hidden custom-scrollbar">
-            <div className="flex flex-col gap-1 mt-4 pb-6">
+        <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden">
+            <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3 pt-2">
             {/* Summary Cards - Colored Status Blocks */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-2 md:gap-2">
+            <div className="grid shrink-0 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-2 md:gap-2">
                 {[
                     { label: 'My Assigned Tickets', value: stats.total, icon: <FileText size={18} />, color: 'from-emerald-400 via-emerald-500 to-emerald-600', bg: 'bg-emerald-500', iconBg: 'bg-white/15', iconColor: 'text-white', type: 'all' },
                     { label: 'Open', value: stats.open, icon: <CircleDot size={18} />, color: 'from-blue-400 via-blue-500 to-blue-600', bg: 'bg-blue-500', iconBg: 'bg-white/15', iconColor: 'text-white', type: 'status', key: 'Open' },
@@ -1435,25 +1435,24 @@ const Dashboard = () => {
                 })}
             </div>
 
-            {/* Main Table Card - Modern Design */}
-            <div className="bg-white flex flex-col">
-                {/* Header Section - Enhanced */}
-                <div className="px-4 md:px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-gray-50 via-white to-gray-50 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="flex items-center gap-3 flex-wrap">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-100 rounded-xl">
-                                <FileText className="text-blue-600" size={20} />
+            {/* Main Table Card: fills remaining height; only table body scrolls (Admin Dashboard parity) */}
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+                <div className="shrink-0 border-b border-gray-200 bg-gradient-to-r from-gray-50 via-white to-gray-50 px-3 py-2.5 md:px-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex items-center gap-2">
+                            <div className="rounded-lg bg-blue-100 p-1.5">
+                                <FileText className="text-blue-600" size={17} />
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-gray-900">Recent Complaints</h2>
-                                <p className="text-xs text-gray-500 font-medium">Manage and track all tickets</p>
+                                <h2 className="text-base font-bold leading-tight text-gray-900">Recent Complaints</h2>
+                                <p className="text-[11px] font-medium leading-snug text-gray-500">Manage and track all tickets</p>
                             </div>
                         </div>
                         {activeFilter.type !== 'all' && (
-                            <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold border border-blue-200">
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-100 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
                                 <span>{getStatusDisplayName(activeFilter.value)}</span>
-                                <button 
-                                    onClick={() => { setActiveFilter({ type: 'all', value: '' }); setCurrentPage(0); }} 
+                                <button
+                                    onClick={() => { setActiveFilter({ type: 'all', value: '' }); setCurrentPage(0); }}
                                     className="w-5 h-5 flex items-center justify-center bg-gray-200 text-gray-600 hover:bg-gray-300 hover:text-gray-800 transition-all duration-200 rounded-full shadow-sm"
                                 >
                                     <X size={14} strokeWidth={2.5} className="transition-transform duration-300 hover:rotate-90" />
@@ -1461,41 +1460,41 @@ const Dashboard = () => {
                             </span>
                         )}
                     </div>
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                         <button
                             onClick={() => setAddComplaintModal(true)}
-                            className="bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 hover:from-blue-700 hover:via-blue-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl active:scale-95 group"
+                            className="group flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-md transition-all duration-300 hover:from-blue-700 hover:via-blue-700 hover:to-indigo-700 hover:shadow-lg active:scale-95"
                         >
-                            <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" />
+                            <Plus size={15} className="transition-transform duration-300 group-hover:rotate-90" />
                             <span>Add Complaint</span>
                         </button>
-                        <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 border border-gray-200">
-                            <label className="text-xs font-semibold text-gray-600 whitespace-nowrap">Show</label>
+                        <div className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5">
+                            <label className="whitespace-nowrap text-[11px] font-semibold text-gray-600">Show</label>
                             <select
                                 value={pageSize}
                                 onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(0); }}
-                                className="px-2 py-1 text-sm border-0 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer"
+                                className="cursor-pointer rounded-md border-0 bg-white px-1.5 py-0.5 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                                 <option value={10}>10</option>
                                 <option value={25}>25</option>
                                 <option value={50}>50</option>
                                 <option value={100}>100</option>
                             </select>
-                            <span className="text-xs font-semibold text-gray-600 whitespace-nowrap">entries</span>
+                            <span className="whitespace-nowrap text-[11px] font-semibold text-gray-600">entries</span>
                         </div>
-                        <div className="relative flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 border border-gray-200">
-                            <Search size={16} className="text-gray-400" />
+                        <div className="relative flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5">
+                            <Search size={14} className="shrink-0 text-gray-400" />
                             <input
                                 type="text"
                                 placeholder="Search tickets..."
                                 value={searchTerm}
                                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(0); }}
-                                className="px-2 py-1 pr-8 text-sm border-0 rounded-lg bg-transparent text-gray-700 w-full min-w-[150px] md:w-64 focus:outline-none focus:ring-0 placeholder:text-gray-400 font-medium"
+                                className="w-full min-w-[140px] rounded-md border-0 bg-transparent px-1 py-0.5 pr-7 text-xs font-medium text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-0 md:w-56"
                             />
                             {searchTerm && (
                                 <button
                                     onClick={() => { setSearchTerm(''); setCurrentPage(0); }}
-                                    className="absolute right-3 w-6 h-6 flex items-center justify-center bg-gray-200 text-gray-700 hover:bg-gray-300 hover:text-gray-800 transition-all duration-200 rounded-full shadow-md"
+                                    className="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center bg-gray-200 text-gray-700 hover:bg-gray-300 hover:text-gray-800 transition-all duration-200 rounded-full shadow-md"
                                     title="Clear search"
                                 >
                                     <X size={14} strokeWidth={2.5} className="transition-transform duration-300 hover:rotate-90" />
@@ -1505,34 +1504,34 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto custom-scrollbar relative">
-                    <table className="w-full border-collapse min-w-full">
-                            <thead className="bg-gradient-to-r from-gray-50 to-gray-100 z-10 shadow-md">
+                <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto custom-scrollbar relative">
+                    <table className="w-full min-w-max border-collapse">
+                            <thead className="bg-gradient-to-r from-gray-50 to-gray-100 z-10 shadow-md [&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-gray-100">
                                 <tr>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">SR NO.</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">TICKET ID</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">CREATED</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">UPDATED</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">USERNAME</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">SERVER NAME</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">DEVICE NAME</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">STATUS</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">ASSIGN TO</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">CONTACT NO.</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">PRIORITY</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">ACTION PANEL</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">ACTION BY</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">REQUEST TYPE</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">REQUEST PANEL</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">REQUEST PERSON</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">COMPLAINT TYPE</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">REMARK</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">USER DESCRIPTION</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">RESOLVED</th>
-                                    <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">ACTIONS</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">SR NO.</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">TICKET ID</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">CREATED</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">UPDATED</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">USERNAME</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">SERVER NAME</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">DEVICE NAME</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">STATUS</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">ASSIGN TO</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">CONTACT NO.</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">PRIORITY</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">ACTION PANEL</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">ACTION BY</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">REQUEST TYPE</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">REQUEST PANEL</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">REQUEST PERSON</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">COMPLAINT TYPE</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">REMARK</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">USER DESCRIPTION</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">RESOLVED</th>
+                                    <th className="whitespace-nowrap border-b-2 border-gray-200 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-gray-700">ACTIONS</th>
                                 </tr>
                             </thead>
-                            <tbody className="text-sm bg-white divide-y divide-gray-100">
+                            <tbody className="divide-y divide-gray-100 bg-white text-sm">
                             {loading ? (
                                 <tr>
                                     <td colSpan="21" className="text-center py-20">
@@ -1577,7 +1576,7 @@ const Dashboard = () => {
                                             <td className="text-gray-600 text-sm whitespace-nowrap py-3 px-4 text-center font-medium">{formatDate(t.createDate)}</td>
                                             <td className="text-gray-600 text-sm whitespace-nowrap py-3 px-4 text-center font-medium">{formatDate(t.updateDate)}</td>
                                             <td className="text-gray-800 whitespace-nowrap py-3 px-4 text-center font-medium">{t.username || '-'}</td>
-                                            <td className="whitespace-nowrap py-4 px-4 text-center">
+                                            <td className="whitespace-nowrap py-3 px-4 text-center">
                                                 <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 border border-blue-200 whitespace-nowrap inline-block shadow-sm">
                                                     {t.brandName || '-'}
                                                 </span>
@@ -1726,33 +1725,14 @@ const Dashboard = () => {
                     </table>
                 </div>
 
-                {/* Pagination - Modern Design */}
-                <div className="px-4 md:px-6 py-5 border-t border-gray-200 bg-gradient-to-r from-gray-50/50 to-white flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="text-sm text-gray-600 font-medium">
-                        Showing <span className="font-bold text-gray-900">{totalElements > 0 ? (currentPage * pageSize) + 1 : 0}</span> to <span className="font-bold text-gray-900">{Math.min((currentPage + 1) * pageSize, totalElements)}</span> of <span className="font-bold text-gray-900">{totalElements}</span> entries
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            disabled={currentPage === 0 || loading}
-                            onClick={() => setCurrentPage(p => p - 1)}
-                            className="px-4 py-2 text-sm font-semibold rounded-xl border-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:border-gray-400 hover:shadow-md disabled:hover:shadow-none disabled:hover:bg-white"
-                        >
-                            Previous
-                        </button>
-                        <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl shadow-lg">
-                            <span className="text-sm font-bold">{currentPage + 1}</span>
-                            <span className="text-xs opacity-80">of</span>
-                            <span className="text-sm font-bold">{totalPages}</span>
-                        </div>
-                        <button
-                            disabled={currentPage >= totalPages - 1 || loading}
-                            onClick={() => setCurrentPage(p => p + 1)}
-                            className="px-4 py-2 text-sm font-semibold rounded-xl border-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:border-gray-400 hover:shadow-md disabled:hover:shadow-none disabled:hover:bg-white"
-                        >
-                            Next
-                        </button>
-                    </div>
-                </div>
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalElements={totalElements}
+                    pageSize={pageSize}
+                    loading={loading}
+                    onPageChange={setCurrentPage}
+                />
             </div>
 
             {/* Ticket Modal */}

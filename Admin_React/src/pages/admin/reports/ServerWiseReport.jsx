@@ -4,8 +4,6 @@ import {
     Search,
     Download,
     RefreshCcw,
-    ChevronLeft,
-    ChevronRight,
     TrendingUp,
     AlertCircle,
     CheckCircle2,
@@ -17,6 +15,7 @@ import {
 import apiClient from '../../../api/apiClient';
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
+import Pagination from '../../../components/Pagination';
 
 const ServerWiseReport = () => {
     const [rawData, setRawData] = useState([]);
@@ -170,9 +169,9 @@ const ServerWiseReport = () => {
     const totalPages = Math.ceil(filteredData.length / pageSize);
 
     return (
-        <div className="space-y-6 animate-fade-in text-gray-800 pt-4 pb-6">
+        <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-3 pt-2 animate-fade-in text-gray-800">
             {/* Analytics Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid shrink-0 grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between group hover:border-blue-200 transition-colors">
                     <div>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Impact</p>
@@ -215,9 +214,9 @@ const ServerWiseReport = () => {
                 </div>
             </div>
 
-            {/* Main Table Card */}
-            <div className="flex-1 min-h-0 bg-white flex flex-col overflow-hidden">
-                <div className="px-4 md:px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-gray-50 via-white to-gray-50 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            {/* Main Table Card — same shell as Ticket Master Report */}
+            <div className="flex-1 min-h-0 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+                <div className="shrink-0 border-b border-gray-100 bg-gradient-to-r from-gray-50 via-white to-gray-50 px-4 py-4 md:px-6 md:flex-row md:items-center md:justify-between flex flex-col gap-4">
                     <div className="flex items-center gap-3 flex-wrap">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-blue-100 rounded-xl">
@@ -283,13 +282,13 @@ const ServerWiseReport = () => {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto overflow-y-auto custom-scrollbar relative" style={{ maxHeight: '320px', height: '320px' }}>
-                    <table className="w-full border-collapse min-w-full">
+                <div className="relative min-h-0 flex-1 overflow-x-auto overflow-y-auto custom-scrollbar">
+                    <table className="w-full min-w-full border-collapse">
                         <thead className="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-10 shadow-md">
                             <tr>
-                                <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">No.</th>
-                                <th className="whitespace-nowrap py-4 px-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">Server Identity</th>
-                                <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                                <th className="whitespace-nowrap py-2 px-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">No.</th>
+                                <th className="whitespace-nowrap py-2 px-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">Server Identity</th>
+                                <th className="whitespace-nowrap py-2 px-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
                                     <div className="flex items-center justify-center gap-2">
                                         <span>Total</span>
                                         <span className="inline-flex px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-bold text-xs">
@@ -297,7 +296,7 @@ const ServerWiseReport = () => {
                                         </span>
                                     </div>
                                 </th>
-                                <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                                <th className="whitespace-nowrap py-2 px-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
                                     <div className="flex items-center justify-center gap-2">
                                         <span>Open</span>
                                         <span className="inline-flex px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 font-bold text-xs">
@@ -305,7 +304,7 @@ const ServerWiseReport = () => {
                                         </span>
                                     </div>
                                 </th>
-                                <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                                <th className="whitespace-nowrap py-2 px-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
                                     <div className="flex items-center justify-center gap-2">
                                         <span>Progress</span>
                                         <span className="inline-flex px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 font-bold text-xs">
@@ -313,7 +312,7 @@ const ServerWiseReport = () => {
                                         </span>
                                     </div>
                                 </th>
-                                <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                                <th className="whitespace-nowrap py-2 px-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
                                     <div className="flex items-center justify-center gap-2">
                                         <span>Self Resolved</span>
                                         <span className="inline-flex px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs">
@@ -321,7 +320,7 @@ const ServerWiseReport = () => {
                                         </span>
                                     </div>
                                 </th>
-                                <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                                <th className="whitespace-nowrap py-2 px-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
                                     <div className="flex items-center justify-center gap-2">
                                         <span>Auto Resolved</span>
                                         <span className="inline-flex px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 font-bold text-xs">
@@ -329,7 +328,7 @@ const ServerWiseReport = () => {
                                         </span>
                                     </div>
                                 </th>
-                                <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200 border-l border-gray-200">
+                                <th className="whitespace-nowrap py-2 px-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200 border-l border-gray-200">
                                     <div className="flex items-center justify-center gap-2">
                                         <span>Urgent</span>
                                         <span className="inline-flex px-2.5 py-1 rounded-full bg-red-100 text-red-700 font-bold text-xs">
@@ -337,7 +336,7 @@ const ServerWiseReport = () => {
                                         </span>
                                     </div>
                                 </th>
-                                <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                                <th className="whitespace-nowrap py-2 px-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
                                     <div className="flex items-center justify-center gap-2">
                                         <span>High</span>
                                         <span className="inline-flex px-2.5 py-1 rounded-full bg-orange-100 text-orange-700 font-bold text-xs">
@@ -345,7 +344,7 @@ const ServerWiseReport = () => {
                                         </span>
                                     </div>
                                 </th>
-                                <th className="whitespace-nowrap py-4 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                                <th className="whitespace-nowrap py-2 px-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
                                     <div className="flex items-center justify-center gap-2">
                                         <span>Normal</span>
                                         <span className="inline-flex px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 font-bold text-xs">
@@ -392,8 +391,8 @@ const ServerWiseReport = () => {
 
                                     return (
                                         <tr key={idx} className="group hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-200 border-b border-gray-100">
-                                            <td className="text-gray-700 whitespace-nowrap text-center py-4 px-4 font-medium">{(currentPage * pageSize) + idx + 1}</td>
-                                            <td className="text-left whitespace-nowrap py-4 px-4">
+                                            <td className="text-gray-700 whitespace-nowrap text-center py-2 px-3 font-medium">{(currentPage * pageSize) + idx + 1}</td>
+                                            <td className="text-left whitespace-nowrap py-2 px-3">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center font-black text-sm">
                                                         {item.brandName?.[0]}
@@ -401,18 +400,18 @@ const ServerWiseReport = () => {
                                                     <span className="font-bold text-gray-800 text-sm">{item.brandName}</span>
                                                 </div>
                                             </td>
-                                            <td className="whitespace-nowrap py-4 px-4 text-center">
+                                            <td className="whitespace-nowrap py-2 px-3 text-center">
                                                 <span className="inline-flex px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 font-black text-sm shadow-sm">
                                                     {rowTotal}
                                                 </span>
                                             </td>
-                                            <td className="text-gray-800 whitespace-nowrap py-4 px-4 text-center font-medium"><span className="text-blue-600 font-bold text-sm">{s.Open || 0}</span></td>
-                                            <td className="text-gray-800 whitespace-nowrap py-4 px-4 text-center font-medium"><span className="text-amber-600 font-bold text-sm">{s['In Progress'] || 0}</span></td>
-                                            <td className="text-gray-800 whitespace-nowrap py-4 px-4 text-center font-medium"><span className="text-emerald-600 font-bold text-sm">{s.Resolved || 0}</span></td>
-                                            <td className="text-gray-800 whitespace-nowrap py-4 px-4 text-center font-medium"><span className="text-purple-600 font-bold text-sm">{s.Closed || 0}</span></td>
-                                            <td className="border-l border-gray-200 whitespace-nowrap py-4 px-4 text-center"><span className="text-red-600 font-bold bg-red-50 px-3 py-1.5 rounded-lg text-sm shadow-sm">{p.Urgent || 0}</span></td>
-                                            <td className="text-gray-800 whitespace-nowrap py-4 px-4 text-center font-medium"><span className="text-orange-600 font-bold text-sm">{p.High || 0}</span></td>
-                                            <td className="text-gray-800 whitespace-nowrap py-4 px-4 text-center font-medium"><span className="text-blue-500 font-bold text-sm">{p.Normal || 0}</span></td>
+                                            <td className="text-gray-800 whitespace-nowrap py-2 px-3 text-center font-medium"><span className="text-blue-600 font-bold text-sm">{s.Open || 0}</span></td>
+                                            <td className="text-gray-800 whitespace-nowrap py-2 px-3 text-center font-medium"><span className="text-amber-600 font-bold text-sm">{s['In Progress'] || 0}</span></td>
+                                            <td className="text-gray-800 whitespace-nowrap py-2 px-3 text-center font-medium"><span className="text-emerald-600 font-bold text-sm">{s.Resolved || 0}</span></td>
+                                            <td className="text-gray-800 whitespace-nowrap py-2 px-3 text-center font-medium"><span className="text-purple-600 font-bold text-sm">{s.Closed || 0}</span></td>
+                                            <td className="border-l border-gray-200 whitespace-nowrap py-2 px-3 text-center"><span className="text-red-600 font-bold bg-red-50 px-3 py-1.5 rounded-lg text-sm shadow-sm">{p.Urgent || 0}</span></td>
+                                            <td className="text-gray-800 whitespace-nowrap py-2 px-3 text-center font-medium"><span className="text-orange-600 font-bold text-sm">{p.High || 0}</span></td>
+                                            <td className="text-gray-800 whitespace-nowrap py-2 px-3 text-center font-medium"><span className="text-blue-500 font-bold text-sm">{p.Normal || 0}</span></td>
                                         </tr>
                                     );
                                 })
@@ -421,33 +420,14 @@ const ServerWiseReport = () => {
                     </table>
                 </div>
 
-                {/* Pagination - Modern Design */}
-                <div className="px-4 md:px-6 py-5 border-t border-gray-200 bg-gradient-to-r from-gray-50/50 to-white flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="text-sm text-gray-600 font-medium">
-                        Showing <span className="font-bold text-gray-900">{filteredData.length > 0 ? (currentPage * pageSize) + 1 : 0}</span> to <span className="font-bold text-gray-900">{Math.min((currentPage + 1) * pageSize, filteredData.length)}</span> of <span className="font-bold text-gray-900">{filteredData.length}</span> entries
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            disabled={currentPage === 0 || loading}
-                            onClick={() => setCurrentPage(p => p - 1)}
-                            className="px-4 py-2 text-sm font-semibold rounded-xl border-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:border-gray-400 hover:shadow-md disabled:hover:shadow-none disabled:hover:bg-white"
-                        >
-                            Previous
-                        </button>
-                        <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl shadow-lg">
-                            <span className="text-sm font-bold">{currentPage + 1}</span>
-                            <span className="text-xs opacity-80">of</span>
-                            <span className="text-sm font-bold">{totalPages || 1}</span>
-                        </div>
-                        <button
-                            disabled={currentPage >= totalPages - 1 || loading}
-                            onClick={() => setCurrentPage(p => p + 1)}
-                            className="px-4 py-2 text-sm font-semibold rounded-xl border-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:border-gray-400 hover:shadow-md disabled:hover:shadow-none disabled:hover:bg-white"
-                        >
-                            Next
-                        </button>
-                    </div>
-                </div>
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalElements={filteredData.length}
+                    pageSize={pageSize}
+                    loading={loading}
+                    onPageChange={setCurrentPage}
+                />
             </div>
         </div>
     );

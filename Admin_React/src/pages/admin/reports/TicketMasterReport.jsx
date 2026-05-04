@@ -23,6 +23,7 @@ import * as XLSX from 'xlsx';
 import Swal from 'sweetalert2';
 import TicketModal from '../../../components/TicketModal';
 import CompactDatePicker from '../../../components/CompactDatePicker';
+import Pagination from '../../../components/Pagination';
 
 const TicketMasterReport = () => {
     const [rawData, setRawData] = useState([]);
@@ -414,9 +415,9 @@ const TicketMasterReport = () => {
     };
 
     return (
-        <div className="space-y-3 animate-fade-in text-gray-800 pt-2 pb-4">
+        <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-3 pt-2 animate-fade-in text-gray-800">
             {/* Header & Main Actions */}
-            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-2 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
+            <div className="shrink-0 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-2 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
                 <div className="flex items-center gap-2">
                     <div className="p-2 bg-blue-600 text-white rounded-lg shadow-xl shadow-blue-100">
                         <FileText size={18} />
@@ -477,7 +478,7 @@ const TicketMasterReport = () => {
             </div>
 
             {/* Advanced Filters */}
-            <div className="bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
+            <div className="shrink-0 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
                 <div className="flex flex-col lg:flex-row gap-2 items-end">
                     <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 w-full">
                         <div className="form-control">
@@ -568,9 +569,9 @@ const TicketMasterReport = () => {
                 </div>
             </div>
 
-            {/* Report Table */}
-            <div className="flex-1 min-h-0 bg-white flex flex-col overflow-hidden">
-                <div className="overflow-x-auto overflow-y-auto custom-scrollbar relative" style={{height: '430px' }}>
+            {/* Report Table — same card shell as summary/header blocks (rounded border box + scroll + pagination) */}
+            <div className="flex-1 min-h-0 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+                <div className="relative min-h-0 flex-1 overflow-x-auto overflow-y-auto custom-scrollbar">
                     <table className="w-full border-collapse min-w-full">
                         <thead className="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-10 shadow-md">
                             <tr>
@@ -653,7 +654,7 @@ const TicketMasterReport = () => {
                                             </td>
                                             <td className="text-gray-800 whitespace-nowrap py-2 px-3 text-center font-medium text-sm">{r.username || r.userName || '-'}</td>
                                             <td className="whitespace-nowrap py-2 px-3 text-center text-sm"><ServerNamePill serverName={r.brandName} /></td>
-                                            <td className="text-gray-700 whitespace-nowrap py-4 px-4 text-center font-medium">{r.deviceOrderId || '-'}</td>
+                                            <td className="text-gray-700 whitespace-nowrap py-2 px-3 text-center font-medium text-sm">{r.deviceOrderId || '-'}</td>
                                             <td className="whitespace-nowrap py-2 px-3 text-center text-sm"><PriorityPill priority={r.priority} /></td>
                                             <td className="whitespace-nowrap py-2 px-3 text-center text-sm"><StatusPill status={r.status} /></td>
                                             <td className="whitespace-nowrap py-2 px-3 text-center text-sm">
@@ -761,33 +762,14 @@ const TicketMasterReport = () => {
                     </table>
                 </div>
 
-                {/* Pagination - Modern Design */}
-                <div className="px-2 md:px-3 py-1.5 border-t border-gray-200 bg-gradient-to-r from-gray-50/50 to-white flex flex-col md:flex-row justify-between items-center gap-2">
-                    <div className="text-sm text-gray-600 font-medium">
-                        Showing <span className="font-bold text-gray-900">{displayTotal > 0 ? (currentPage * pageSize) + 1 : 0}</span> to <span className="font-bold text-gray-900">{Math.min((currentPage + 1) * pageSize, displayTotal)}</span> of <span className="font-bold text-gray-900">{displayTotal}</span> entries
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            disabled={currentPage === 0 || loading}
-                            onClick={() => setCurrentPage(p => p - 1)}
-                            className="px-3 py-1.5 text-sm font-semibold rounded-lg border transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:border-gray-400 disabled:hover:shadow-none disabled:hover:bg-white"
-                        >
-                            Previous
-                        </button>
-                        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg shadow-md">
-                            <span className="text-sm font-bold">{currentPage + 1}</span>
-                            <span className="text-xs opacity-80">of</span>
-                            <span className="text-sm font-bold">{calculatedTotalPages || 1}</span>
-                        </div>
-                        <button
-                            disabled={currentPage >= calculatedTotalPages - 1 || loading}
-                            onClick={() => setCurrentPage(p => p + 1)}
-                            className="px-3 py-1.5 text-sm font-semibold rounded-lg border transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:border-gray-400 disabled:hover:shadow-none disabled:hover:bg-white"
-                        >
-                            Next
-                        </button>
-                    </div>
-                </div>
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={calculatedTotalPages}
+                    totalElements={displayTotal}
+                    pageSize={pageSize}
+                    loading={loading}
+                    onPageChange={setCurrentPage}
+                />
             </div>
 
             {/* Ticket Modal */}

@@ -20,7 +20,7 @@ const SupportStaffLayout = () => {
         <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
             <SupportStaffNavbar />
             {/* Match navbar horizontal spacing (mx-4) using px-4 here */}
-            <main className="flex-1 px-4 pb-4 pt-0 w-full overflow-hidden">
+            <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-4 pt-0 w-full">
                 <Outlet />
             </main>
         </div>
