@@ -20,6 +20,7 @@ import apiClient from '../../api/apiClient';
 import Swal from 'sweetalert2';
 import Pagination from '../../components/Pagination';
 import PremiumLoader from '../../components/PremiumLoader';
+import PageSizeDropdown from '../../components/PageSizeDropdown';
 
 const SupportStaffManagement = () => {
     // State
@@ -271,19 +272,11 @@ const SupportStaffManagement = () => {
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-                        <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 border border-gray-200">
-                            <label className="text-xs font-semibold text-gray-600 whitespace-nowrap">Show</label>
-                            <select
-                                value={pageSize}
-                                onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(0); }}
-                                className="px-2 py-1 text-sm border-0 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 font-medium cursor-pointer"
-                            >
-                                <option value={10}>10</option>
-                                <option value={25}>25</option>
-                                <option value={50}>50</option>
-                            </select>
-                            <span className="text-xs font-semibold text-gray-600 whitespace-nowrap">entries</span>
-                        </div>
+                        <PageSizeDropdown
+                            pageSize={pageSize}
+                            setPageSize={setPageSize}
+                            onPageSizeChange={() => setCurrentPage(0)}
+                        />
                         <div className="relative flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 border border-gray-200">
                             <Search className="text-gray-400" size={16} />
                             <input

@@ -28,6 +28,7 @@ import Swal from 'sweetalert2';
 import TicketModal from '../../components/TicketModal';
 import Pagination from '../../components/Pagination';
 import PremiumLoader from '../../components/PremiumLoader';
+import PageSizeDropdown from '../../components/PageSizeDropdown';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 
@@ -1550,20 +1551,11 @@ const Dashboard = () => {
                             <Plus size={15} className="transition-transform duration-300 group-hover:rotate-90" />
                             <span>Add Complaint</span>
                         </button>
-                        <div className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5">
-                            <label className="whitespace-nowrap text-[11px] font-semibold text-gray-600">Show</label>
-                            <select
-                                value={pageSize}
-                                onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(0); }}
-                                className="cursor-pointer rounded-md border-0 bg-white px-1.5 py-0.5 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value={10}>10</option>
-                                <option value={25}>25</option>
-                                <option value={50}>50</option>
-                                <option value={100}>100</option>
-                            </select>
-                            <span className="whitespace-nowrap text-[11px] font-semibold text-gray-600">entries</span>
-                        </div>
+                        <PageSizeDropdown
+                            pageSize={pageSize}
+                            setPageSize={setPageSize}
+                            onPageSizeChange={() => setCurrentPage(0)}
+                        />
                         <div className="relative flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5">
                             <Search size={14} className="shrink-0 text-gray-400" />
                             <input

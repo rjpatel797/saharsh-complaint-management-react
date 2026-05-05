@@ -25,6 +25,7 @@ import TicketModal from '../../../components/TicketModal';
 import CompactDatePicker from '../../../components/CompactDatePicker';
 import Pagination from '../../../components/Pagination';
 import PremiumLoader from '../../../components/PremiumLoader';
+import PageSizeDropdown from '../../../components/PageSizeDropdown';
 
 const TicketMasterReport = () => {
     const [rawData, setRawData] = useState([]);
@@ -435,19 +436,11 @@ const TicketMasterReport = () => {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-1.5 w-full xl:w-auto">
-                    <div className="flex items-center gap-1.5">
-                        <label className="text-xs text-gray-600">Show</label>
-                        <select
-                            value={pageSize}
-                            onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(0); }}
-                            className="px-2 py-1 text-xs border border-gray-300 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                            <option value={10}>10</option>
-                            <option value={25}>25</option>
-                            <option value={50}>50</option>
-                        </select>
-                        <span className="text-xs text-gray-600">entries</span>
-                    </div>
+                    <PageSizeDropdown
+                        pageSize={pageSize}
+                        setPageSize={setPageSize}
+                        onPageSizeChange={() => setCurrentPage(0)}
+                    />
                     <div className="flex-1 min-w-[250px] relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                         <input
