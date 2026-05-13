@@ -819,7 +819,7 @@ const Dashboard = () => {
         return trimmed;
     };
 
-    // Helper: Get Server Base URL (explicit mapping for videocon, torrentgas, server_1, server_2, server_3)
+    // Helper: Get Server Base URL (explicit mapping for videocon, torrentgas, server_1, server_2, server_3, Server_4_RTO, …)
     const getServerBaseUrl = (brandName) => {
         const name = (brandName || '').toString().toLowerCase().trim();
 
@@ -853,8 +853,8 @@ const Dashboard = () => {
             return 'https://gps3.saharshsolutions.co.in/complaintmaster.jsp';
         }
 
-        // RTO server
-        if (name === 'rto' || name.includes('rto')) {
+        // Server_4_RTO (complaintmaster)
+        if (name === 'server_4_rto' || name.includes('server_4_rto')) {
             return 'https://rto.saharshsolutions.co.in/complaintmaster.jsp';
         }
 
@@ -872,11 +872,11 @@ const Dashboard = () => {
         return null;
     };
 
-    const VLTD_OPEN_API_BASE = 'http://51.79.255.42:2083/open/api';
+    const SERVER_5_RTO_COMMAN_OPEN_API_BASE = 'http://51.79.255.42:2083/open/api';
 
-    const isVltdServer = (brandName) => {
+    const isServer5RtoCommanServer = (brandName) => {
         const n = (brandName || '').toString().toLowerCase().trim();
-        return n === 'vltd' || n.includes('vltd');
+        return n === 'server_5_rto_comman' || n.includes('server_5_rto_comman');
     };
 
     // Open Add Complaint Modal
@@ -965,29 +965,29 @@ const Dashboard = () => {
     const handleServerSelect = (server) => {
         const brandName = (server.brandName || '').toLowerCase().trim();
         
-        // Check if server is valid (videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, emri, vltd)
+        // Check if server is valid (videocon, torrentgas, server_1, server_2, server_3, Server_4_RTO, gvk, emri112, emri, Server_5_RTO_Comman)
         const isValidServer =
             brandName === 'videocon' ||
             brandName.includes('torrent') ||
             brandName === 'server_1' ||
             brandName === 'server_2' ||
             brandName === 'server_3' ||
-            brandName === 'rto' ||
-            brandName.includes('rto') ||
+            brandName === 'server_4_rto' ||
+            brandName.includes('server_4_rto') ||
             brandName === 'gvk' ||
             brandName.includes('gvk') ||
             brandName === 'emri112' ||
             brandName.includes('emri112') ||
             brandName === 'emri' ||
             brandName.includes('emri') ||
-            brandName === 'vltd' ||
-            brandName.includes('vltd');
+            brandName === 'server_5_rto_comman' ||
+            brandName.includes('server_5_rto_comman');
         
         if (!isValidServer) {
             // Show error message for invalid server
             setToast({
                 show: true,
-                message: `"${server.brandName}" is not a valid server. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, emri, and vltd are supported.`,
+                message: `"${server.brandName}" is not a valid server. Only videocon, torrentgas, server_1, server_2, server_3, Server_4_RTO, gvk, emri112, emri, and Server_5_RTO_Comman are supported.`,
                 type: 'error'
             });
             setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
@@ -1019,7 +1019,7 @@ const Dashboard = () => {
         loadComplaintTypes();
     };
 
-    // Load Users - Only for valid servers (videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, emri, vltd)
+    // Load Users - Only for valid servers (videocon, torrentgas, server_1, server_2, server_3, Server_4_RTO, gvk, emri112, emri, Server_5_RTO_Comman)
     const loadUsers = async (server) => {
         if (!server) return;
         
@@ -1031,20 +1031,20 @@ const Dashboard = () => {
             brandName === 'server_1' ||
             brandName === 'server_2' ||
             brandName === 'server_3' ||
-            brandName === 'rto' ||
-            brandName.includes('rto') ||
+            brandName === 'server_4_rto' ||
+            brandName.includes('server_4_rto') ||
             brandName === 'gvk' ||
             brandName.includes('gvk') ||
             brandName === 'emri112' ||
             brandName.includes('emri112') ||
             brandName === 'emri' ||
             brandName.includes('emri') ||
-            brandName === 'vltd' ||
-            brandName.includes('vltd');
+            brandName === 'server_5_rto_comman' ||
+            brandName.includes('server_5_rto_comman');
         
         if (!isValidServer) {
             setUsers([]);
-            setUserError(`"${server.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, emri, and vltd are available.`);
+            setUserError(`"${server.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, server_3, Server_4_RTO, gvk, emri112, emri, and Server_5_RTO_Comman are available.`);
             return;
         }
         
@@ -1052,8 +1052,8 @@ const Dashboard = () => {
         setUsers([]); // Clear previous users
         setUserError(null); // Clear previous error
         try {
-            if (isVltdServer(server.brandName)) {
-                const response = await fetch(`${VLTD_OPEN_API_BASE}/getAllUserList`, {
+            if (isServer5RtoCommanServer(server.brandName)) {
+                const response = await fetch(`${SERVER_5_RTO_COMMAN_OPEN_API_BASE}/getAllUserList`, {
                     method: 'POST',
                     headers: {
                         Accept: 'application/json',
@@ -1064,7 +1064,7 @@ const Dashboard = () => {
                 const data = await response.json();
                 if (!response.ok || data?.status === false) {
                     setUsers([]);
-                    setUserError(data?.message || 'Failed to load users for VLTD');
+                    setUserError(data?.message || 'Failed to load users for Server_5_RTO_Comman');
                     return;
                 }
                 const raw = Array.isArray(data?.data) ? data.data : [];
@@ -1127,7 +1127,7 @@ const Dashboard = () => {
         loadDevices(user);
     };
 
-    // Load Devices - Only for valid servers (videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, emri, vltd)
+    // Load Devices - Only for valid servers (videocon, torrentgas, server_1, server_2, server_3, Server_4_RTO, gvk, emri112, emri, Server_5_RTO_Comman)
     const loadDevices = async (user) => {
         if (!selectedServer || !user) return;
         
@@ -1139,20 +1139,20 @@ const Dashboard = () => {
             brandName === 'server_1' ||
             brandName === 'server_2' ||
             brandName === 'server_3' ||
-            brandName === 'rto' ||
-            brandName.includes('rto') ||
+            brandName === 'server_4_rto' ||
+            brandName.includes('server_4_rto') ||
             brandName === 'gvk' ||
             brandName.includes('gvk') ||
             brandName === 'emri112' ||
             brandName.includes('emri112') ||
             brandName === 'emri' ||
             brandName.includes('emri') ||
-            brandName === 'vltd' ||
-            brandName.includes('vltd');
+            brandName === 'server_5_rto_comman' ||
+            brandName.includes('server_5_rto_comman');
         
         if (!isValidServer) {
             setDevices([]);
-            setDeviceError(`"${selectedServer.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, server_3, rto, gvk, emri112, emri, and vltd are available.`);
+            setDeviceError(`"${selectedServer.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, server_3, Server_4_RTO, gvk, emri112, emri, and Server_5_RTO_Comman are available.`);
             return;
         }
         
@@ -1162,12 +1162,12 @@ const Dashboard = () => {
         try {
             const managerId = user.managerId ?? user.userid ?? user.id;
 
-            if (isVltdServer(selectedServer.brandName)) {
+            if (isServer5RtoCommanServer(selectedServer.brandName)) {
                 if (managerId === undefined || managerId === null || `${managerId}`.trim() === '') {
-                    setDeviceError('Invalid manager ID for VLTD user');
+                    setDeviceError('Invalid manager ID for Server_5_RTO_Comman user');
                     return;
                 }
-                const url = `${VLTD_OPEN_API_BASE}/getDeviceListByMid?managerId=${encodeURIComponent(managerId)}`;
+                const url = `${SERVER_5_RTO_COMMAN_OPEN_API_BASE}/getDeviceListByMid?managerId=${encodeURIComponent(managerId)}`;
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: {
