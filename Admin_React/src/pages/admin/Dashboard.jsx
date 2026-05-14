@@ -877,9 +877,29 @@ const Dashboard = () => {
 
     const SERVER_5_RTO_COMMAN_OPEN_API_BASE = 'http://51.79.255.42:2083/open/api';
 
+    const normalizeServerBrandName = (brandName) =>
+        (brandName || '').toString().toLowerCase().trim();
+
     const isServer5RtoCommanServer = (brandName) => {
-        const n = (brandName || '').toString().toLowerCase().trim();
+        const n = normalizeServerBrandName(brandName);
         return n === 'server_5_rto_comman' || n.includes('server_5_rto_comman');
+    };
+
+    /** Single gate — user/device/complaint-type fetches must not run unless this passes. */
+    const isSupportedServerBrand = (brandName) => {
+        const n = normalizeServerBrandName(brandName);
+        if (!n) return false;
+        if (isServer5RtoCommanServer(brandName)) return true;
+        if (n === 'videocon' || n.includes('videocon')) return true;
+        if (n.includes('torrent')) return true;
+        if (n === 'server_1') return true;
+        if (n === 'server_2') return true;
+        if (n === 'server_3') return true;
+        if (n === 'server_4_rto' || n.includes('server_4_rto')) return true;
+        if (n === 'gvk' || n.includes('gvk')) return true;
+        if (n === 'emri112' || n.includes('emri112')) return true;
+        if (n === 'emri' || (n.includes('emri') && !n.includes('emri112'))) return true;
+        return false;
     };
 
     // Open Add Complaint Modal
@@ -966,27 +986,7 @@ const Dashboard = () => {
 
     // Handle Server Selection - Validate server before loading users/devices
     const handleServerSelect = (server) => {
-        const brandName = (server.brandName || '').toLowerCase().trim();
-        
-        // Check if server is valid (videocon, torrentgas, server_1, server_2, server_3, Server_4_RTO, gvk, emri112, emri, Server_5_RTO_Comman)
-        const isValidServer =
-            brandName === 'videocon' ||
-            brandName.includes('torrent') ||
-            brandName === 'server_1' ||
-            brandName === 'server_2' ||
-            brandName === 'server_3' ||
-            brandName === 'server_4_rto' ||
-            brandName.includes('server_4_rto') ||
-            brandName === 'gvk' ||
-            brandName.includes('gvk') ||
-            brandName === 'emri112' ||
-            brandName.includes('emri112') ||
-            brandName === 'emri' ||
-            brandName.includes('emri') ||
-            brandName === 'server_5_rto_comman' ||
-            brandName.includes('server_5_rto_comman');
-        
-        if (!isValidServer) {
+        if (!isSupportedServerBrand(server.brandName)) {
             // Show error message for invalid server
             setToast({
                 show: true,
@@ -1019,33 +1019,14 @@ const Dashboard = () => {
         setDevices([]);
         setFieldErrors(prev => ({ ...prev, server: false }));
         loadUsers(server);
-        loadComplaintTypes();
+        loadComplaintTypes(server);
     };
 
     // Load Users - Only for valid servers (videocon, torrentgas, server_1, server_2, server_3, Server_4_RTO, gvk, emri112, emri, Server_5_RTO_Comman)
     const loadUsers = async (server) => {
         if (!server) return;
         
-        // Validate server before loading
-        const brandName = (server.brandName || '').toLowerCase().trim();
-        const isValidServer =
-            brandName === 'videocon' ||
-            brandName.includes('torrent') ||
-            brandName === 'server_1' ||
-            brandName === 'server_2' ||
-            brandName === 'server_3' ||
-            brandName === 'server_4_rto' ||
-            brandName.includes('server_4_rto') ||
-            brandName === 'gvk' ||
-            brandName.includes('gvk') ||
-            brandName === 'emri112' ||
-            brandName.includes('emri112') ||
-            brandName === 'emri' ||
-            brandName.includes('emri') ||
-            brandName === 'server_5_rto_comman' ||
-            brandName.includes('server_5_rto_comman');
-        
-        if (!isValidServer) {
+        if (!isSupportedServerBrand(server.brandName)) {
             setUsers([]);
             setUserError(`"${server.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, server_3, Server_4_RTO, gvk, emri112, emri, and Server_5_RTO_Comman are available.`);
             return;
@@ -1134,26 +1115,7 @@ const Dashboard = () => {
     const loadDevices = async (user) => {
         if (!selectedServer || !user) return;
         
-        // Validate server before loading
-        const brandName = (selectedServer.brandName || '').toLowerCase().trim();
-        const isValidServer =
-            brandName === 'videocon' ||
-            brandName.includes('torrent') ||
-            brandName === 'server_1' ||
-            brandName === 'server_2' ||
-            brandName === 'server_3' ||
-            brandName === 'server_4_rto' ||
-            brandName.includes('server_4_rto') ||
-            brandName === 'gvk' ||
-            brandName.includes('gvk') ||
-            brandName === 'emri112' ||
-            brandName.includes('emri112') ||
-            brandName === 'emri' ||
-            brandName.includes('emri') ||
-            brandName === 'server_5_rto_comman' ||
-            brandName.includes('server_5_rto_comman');
-        
-        if (!isValidServer) {
+        if (!isSupportedServerBrand(selectedServer.brandName)) {
             setDevices([]);
             setDeviceError(`"${selectedServer.brandName}" is not supported. Only videocon, torrentgas, server_1, server_2, server_3, Server_4_RTO, gvk, emri112, emri, and Server_5_RTO_Comman are available.`);
             return;
@@ -1249,11 +1211,26 @@ const Dashboard = () => {
         setFieldErrors(prev => ({ ...prev, device: false }));
     };
 
-    // Load Complaint Types
-    const loadComplaintTypes = async () => {
+    // Load Complaint Types (only after server is supported; URL follows selected server)
+    const loadComplaintTypes = async (server) => {
         setLoadingComplaintTypes(true);
+        setComplaintTypes([]);
         try {
-            const typeUrl = 'https://gps.saharshsolutions.co.in/complaintmaster.jsp?opr=getComplaintType';
+            if (!server?.brandName || !isSupportedServerBrand(server.brandName)) {
+                return;
+            }
+            let typeUrl;
+            if (isServer5RtoCommanServer(server.brandName)) {
+                typeUrl = 'https://gps.saharshsolutions.co.in/complaintmaster.jsp?opr=getComplaintType';
+            } else {
+                const base = getServerBaseUrl(server.brandName);
+                if (!base) {
+                    setToast({ show: true, message: 'Complaint types are not configured for this server.', type: 'error' });
+                    setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
+                    return;
+                }
+                typeUrl = `${base}?opr=getComplaintType`;
+            }
             const response = await fetch(typeUrl);
             const data = await response.json();
             const typeList = Array.isArray(data) ? data : (data.data && Array.isArray(data.data) ? data.data : []);
